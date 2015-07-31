@@ -227,9 +227,9 @@ public:
 		  gmin = g;
 	      }
 	  }
-	sum_sl += jmax(0, gi-gmin);
+	sum_sl += std::max(0.0, gi-gmin);
       }
-    return jmax(0, getW2() + C * sum_sl - sum_bi);
+    return std::max(0.0, getW2() + C * sum_sl - sum_bi);
   }
 
   // Display stuffs along learning
@@ -395,12 +395,12 @@ private:
       {
 	double beta = outp->getBeta(pattern.x_id);
 	if (ygp.output == pattern.y)
-	  lambda = jmin(lambda, C - beta);
+	  lambda = std::min(lambda, C - beta);
 	else
-	  lambda = jmin(lambda, fabs(beta));
+	  lambda = std::min(lambda, fabs(beta));
       }
     else
-      lambda = jmin(lambda, C);
+      lambda = std::min(lambda, C);
 
     //Update parameters
     outp->update(pattern.x, lambda, pattern.x_id);

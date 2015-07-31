@@ -32,9 +32,6 @@
 
 # include "vectors.h"
 
-#define jmin(a,b) (((a)<(b))?(a):(b))
-#define jmax(a,b) (((a)>(b))?(a):(b))
-
 // EXAMPLER: to read and store data and model files.
 class Exampler
 	{
