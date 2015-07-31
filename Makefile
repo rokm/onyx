@@ -1,7 +1,7 @@
 SHELL=/bin/sh
-CFLAGS= -O3 -march=nocona -Wall
+CFLAGS= -O3 -march=nocona -Wall -std=c++11
 TOOLS= LaRank.cpp vectors.cpp
-TOOLSINCL= LaRank.h vectors.h wrapper.h 
+TOOLSINCL= LaRank.h vectors.h wrapper.h
 LARANKSRC= LaRankLearn.cpp
 LARANKTESTSRC= LaRankClassify.cpp
 
