@@ -16,258 +16,288 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA
 
 
-#ifndef LARANK_H_
-# define LARANK_H_
+#ifndef LARANK_H
+#define LARANK_H
 
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
-# include <ctime>
-# include <sys/time.h>
-# include <unordered_map>
-# include <unordered_set>
-# include <cmath>
+#include <ctime>
+#include <sys/time.h>
+#include <unordered_map>
+#include <unordered_set>
+#include <cmath>
 
-# include "vectors.h"
+#include "vectors.h"
 
 // EXAMPLER: to read and store data and model files.
 class Exampler
-	{
-	public:
+    {
+    public:
 
-		struct example_t
-		{
-			example_t(SVector x, int y)
-			: inpt(x), cls(y) {}
-			example_t() {}
+        struct example_t
+        {
+            example_t(SVector x, int y)
+            : inpt(x), cls(y) {}
+            example_t() {}
 
-			SVector inpt;
-			int cls;
-		};
+            SVector inpt;
+            int cls;
+        };
 
-		typedef std::vector< example_t>  examples_t;
+        typedef std::vector< example_t>  examples_t;
 
-		int libsvm_load_data(char *filename, bool model_file) {
-			int index; double value;
-			int elements, i;
-			FILE *fp = fopen(filename,"r");
+        int libsvm_load_data(char *filename, bool model_file) {
+            int index; double value;
+            int elements, i;
+            FILE *fp = fopen(filename,"r");
 
-			if(fp == NULL)
+            if(fp == NULL)
       {
         fprintf(stderr,"Can't open input file \"%s\"\n",filename);
         exit(1);
       }
-			else
-				printf("loading \"%s\"..  \n",filename);
-			int msz = 0;
-			elements = 0;
-			while(1)
+            else
+                printf("loading \"%s\"..  \n",filename);
+            int msz = 0;
+            elements = 0;
+            while(1)
       {
-				int c = fgetc(fp);
-				switch(c)
-				{
-						case '\n':
-							++msz;
-							elements=0;
-							break;
-						case ':':
-							++elements;
-							break;
-						case EOF:
-							goto out;
-						default:
-							;
-				}
+                int c = fgetc(fp);
+                switch(c)
+                {
+                        case '\n':
+                            ++msz;
+                            elements=0;
+                            break;
+                        case ':':
+                            ++elements;
+                            break;
+                        case EOF:
+                            goto out;
+                        default:
+                            ;
+                }
       }
-			out:
-			rewind(fp);
-			max_index = 0;
-			nb_labels = 0;
-			for(i=0;i<msz;i++)
+            out:
+            rewind(fp);
+            max_index = 0;
+            nb_labels = 0;
+            for(i=0;i<msz;i++)
       {
-				int label;
-				SVector v;
-				fscanf(fp,"%d",&label);
-				if((int) label >= nb_labels) nb_labels = label;
-				while(1)
-				{
-					int c;
-					do {
-						c = getc(fp);
-						if(c=='\n') goto out2;
-					} while(isspace(c));
-					ungetc(c,fp);
-					fscanf(fp,"%d:%lf",&index,&value);
-					v.set(index,value);
-					if (index>max_index) max_index=index;
-				}
+                int label;
+                SVector v;
+                fscanf(fp,"%d",&label);
+                if((int) label >= nb_labels) nb_labels = label;
+                while(1)
+                {
+                    int c;
+                    do {
+                        c = getc(fp);
+                        if(c=='\n') goto out2;
+                    } while(isspace(c));
+                    ungetc(c,fp);
+                    fscanf(fp,"%d:%lf",&index,&value);
+                    v.set(index,value);
+                    if (index>max_index) max_index=index;
+                }
 
       out2:
-				data.push_back(example_t(v,label));
-			}
-			fclose(fp);
-			if(model_file)
-				printf("-> classes: %d\n",msz);
-			else
-				printf("-> examples: %d features: %d labels: %d\n",msz,max_index, nb_labels);
-			nb_ex = msz;
-			return msz;
-		}
+                data.push_back(example_t(v,label));
+            }
+            fclose(fp);
+            if(model_file)
+                printf("-> classes: %d\n",msz);
+            else
+                printf("-> examples: %d features: %d labels: %d\n",msz,max_index, nb_labels);
+            nb_ex = msz;
+            return msz;
+        }
 
-		// ...
-		examples_t data;
-		int nb_ex;
-		int max_index;
-		int nb_labels;
-	};
+        // ...
+        examples_t data;
+        int nb_ex;
+        int max_index;
+        int nb_labels;
+    };
 
 
-// LARANKPATTERN: to keep track of the support patterns
+// LARANKPATTERN: used to keep track of support patterns
 class LaRankPattern
-	{
-	public:
-		LaRankPattern(int x_id, const SVector& x, int y)
-    : x_id(x_id), x(x), y(y)  {}
-		LaRankPattern()
-    : x_id(0) {}
+{
+public:
 
-		bool exists() const
-    {return x_id >= 0;}
+    LaRankPattern (int x_id, const SVector &x, int y)
+        : x_id(x_id), x(x), y(y)
+    {
+    }
 
-		void clear()
-    {x_id = -1;}
+    LaRankPattern ()
+        : x_id(0)
+    {
+    }
 
-		int x_id;
-		SVector x;
-		int y;
-	};
+    bool exists () const
+    {
+        return x_id >= 0;
+    }
 
-// LARANKPATTERNS: the collection of support patterns
+    void clear ()
+    {
+        x_id = -1;
+    }
+
+public:
+    int x_id;
+    SVector x;
+    int y;
+};
+
+// LARANKPATTERNS: collection of support patterns
 class LaRankPatterns
-	{
-	public:
-		LaRankPatterns() {}
-		~LaRankPatterns() {}
-
-		void insert(const LaRankPattern& pattern)
+{
+public:
+    LaRankPatterns ()
     {
-      if (!isPattern(pattern.x_id))
-			{
-				if (freeidx.size())
-				{
-					std::unordered_set<unsigned>::iterator it = freeidx.begin();
-					patterns[*it] = pattern;
-					x_id2rank[pattern.x_id] = *it;
-					freeidx.erase(it);
-				}
-				else
-				{
-					patterns.push_back(pattern);
-					x_id2rank[pattern.x_id] = patterns.size() - 1;
-				}
-			}
-      else
-			{
-				int rank = getPatternRank(pattern.x_id);
-				patterns[rank]=pattern;
-			}
     }
 
-		void remove(unsigned i)
+    virtual ~LaRankPatterns ()
     {
-      x_id2rank[patterns[i].x_id] = 0;
-      patterns[i].clear();
-      freeidx.insert(i);
     }
 
-		bool empty() const
-    {return patterns.size() == freeidx.size();}
-
-		unsigned size() const
-    {return patterns.size() - freeidx.size();}
-
-		LaRankPattern& sample()
+    void insert (const LaRankPattern &pattern)
     {
-      assert(!empty());
-      while (true)
-			{
-				unsigned r = rand() % patterns.size();
-				if (patterns[r].exists())
-					return patterns[r];
-			}
-      return patterns[0];
+        if (!isPattern(pattern.x_id)) {
+            if (freeidx.size()) {
+                std::unordered_set<unsigned>::iterator it = freeidx.begin();
+                patterns[*it] = pattern;
+                x_id2rank[pattern.x_id] = *it;
+                freeidx.erase(it);
+            } else {
+                patterns.push_back(pattern);
+                x_id2rank[pattern.x_id] = patterns.size() - 1;
+            }
+        } else {
+            int rank = getPatternRank(pattern.x_id);
+            patterns[rank]=pattern;
+        }
     }
 
-		unsigned getPatternRank(int x_id)
-    {return x_id2rank[x_id];}
-
-		bool isPattern(int x_id)
-    {return x_id2rank[x_id]!=0;}
-
-		LaRankPattern& getPattern(int x_id)
+    void remove (unsigned i)
     {
-      unsigned rank = x_id2rank[x_id];
-      return patterns[rank];
+        x_id2rank[patterns[i].x_id] = 0;
+        patterns[i].clear();
+        freeidx.insert(i);
     }
 
-		unsigned maxcount() const
-    {return patterns.size();}
+    bool empty () const
+    {
+        return patterns.size() == freeidx.size();
+    }
 
-		LaRankPattern& operator [](unsigned i)
-    {return patterns[i];}
+    unsigned size () const
+    {
+        return patterns.size() - freeidx.size();
+    }
 
-		const LaRankPattern& operator [](unsigned i) const
-    {return patterns[i];}
+    LaRankPattern &sample ()
+    {
+        assert(!empty());
+        while (true) {
+            unsigned r = rand() % patterns.size();
+            if (patterns[r].exists()) {
+                return patterns[r];
+            }
+        }
 
-	private:
-        std::unordered_set<unsigned> freeidx;
-		std::vector<LaRankPattern> patterns;
-		std::unordered_map<int, unsigned> x_id2rank;
-	};
+        return patterns[0];
+    }
+
+    unsigned getPatternRank (int x_id)
+    {
+        return x_id2rank[x_id];
+    }
+
+    bool isPattern (int x_id)
+    {
+        return x_id2rank[x_id]!=0;
+    }
+
+    LaRankPattern &getPattern (int x_id)
+    {
+        unsigned rank = x_id2rank[x_id];
+        return patterns[rank];
+    }
+
+    unsigned maxcount () const
+    {
+        return patterns.size();
+    }
+
+    LaRankPattern &operator [] (unsigned i)
+    {
+        return patterns[i];
+    }
+
+    const LaRankPattern &operator [] (unsigned i) const
+    {
+        return patterns[i];
+    }
+
+private:
+    std::unordered_set<unsigned> freeidx;
+    std::vector<LaRankPattern> patterns;
+    std::unordered_map<int, unsigned> x_id2rank;
+};
 
 
 // MACHINE: the thing we learn
 class Machine
-	{
-	public:
-		virtual ~Machine() {};
+{
+public:
+    virtual ~Machine() {};
 
-		//MAIN functions for training and testing
-		virtual int add(const SVector& x, int classnumber, int x_id) = 0;
-		virtual int predict(const SVector& x) = 0;
+    //MAIN functions for training and testing
+    virtual int add (const SVector &x, int classnumber, int x_id) = 0;
+    virtual int predict (const SVector &x) = 0;
 
-		// Functions for saving and loading model
-		virtual void save_outputs(std::ostream& ostr) = 0;
-		virtual void add_output(int y, LaFVector wy)	= 0;
+    // Functions for saving and loading model
+    virtual void save_outputs (std::ostream &ostr) = 0;
+    virtual void add_output (int y, LaFVector wy)    = 0;
 
-		// Information functions
-		virtual void printStuff(double initime, bool dual) = 0;
-		virtual double computeGap() = 0;
+    // Information functions
+    virtual void printStuff(double initime, bool dual) = 0;
+    virtual double computeGap() = 0;
 
-		std::unordered_set<int> classes;
-		unsigned class_count() const
-    {return classes.size();}
+    unsigned class_count () const
+    {
+        return classes.size();
+    }
 
-		double C;
-		double tau;
-	};
+public:
+    std::unordered_set<int> classes;
+    double C;
+    double tau;
+};
 
-extern Machine* create_larank();
+extern Machine *create_larank ();
 
-inline double getTime() {
-  struct timeval tv;
-  struct timezone tz;
-  long int sec;
-  long int usec;
-  double mytime;
-  gettimeofday(&tv, &tz);
-  sec= (long int) tv.tv_sec;
-  usec= (long int) tv.tv_usec;
-  mytime = (double) sec+usec*0.000001;
-  return mytime;
+inline double getTime ()
+{
+    struct timeval tv;
+    struct timezone tz;
+    long int sec;
+    long int usec;
+    double mytime;
+
+    gettimeofday(&tv, &tz);
+    sec = (long int)tv.tv_sec;
+    usec = (long int)tv.tv_usec;
+    mytime = (double)sec + usec*0.000001;
+
+    return mytime;
 }
 
-
-#endif // !LARANK_H_
+#endif // LARANK_H
