@@ -34,94 +34,113 @@
 
 // EXAMPLER: to read and store data and model files.
 class Exampler
+{
+public:
+    struct example_t
     {
-    public:
-
-        struct example_t
+        example_t (SVector x, int y)
+            : inpt(x), cls(y)
         {
-            example_t(SVector x, int y)
-            : inpt(x), cls(y) {}
-            example_t() {}
-
-            SVector inpt;
-            int cls;
-        };
-
-        typedef std::vector< example_t>  examples_t;
-
-        int libsvm_load_data(char *filename, bool model_file) {
-            int index; double value;
-            int elements, i;
-            FILE *fp = fopen(filename,"r");
-
-            if(fp == NULL)
-      {
-        fprintf(stderr,"Can't open input file \"%s\"\n",filename);
-        exit(1);
-      }
-            else
-                printf("loading \"%s\"..  \n",filename);
-            int msz = 0;
-            elements = 0;
-            while(1)
-      {
-                int c = fgetc(fp);
-                switch(c)
-                {
-                        case '\n':
-                            ++msz;
-                            elements=0;
-                            break;
-                        case ':':
-                            ++elements;
-                            break;
-                        case EOF:
-                            goto out;
-                        default:
-                            ;
-                }
-      }
-            out:
-            rewind(fp);
-            max_index = 0;
-            nb_labels = 0;
-            for(i=0;i<msz;i++)
-      {
-                int label;
-                SVector v;
-                fscanf(fp,"%d",&label);
-                if((int) label >= nb_labels) nb_labels = label;
-                while(1)
-                {
-                    int c;
-                    do {
-                        c = getc(fp);
-                        if(c=='\n') goto out2;
-                    } while(isspace(c));
-                    ungetc(c,fp);
-                    fscanf(fp,"%d:%lf",&index,&value);
-                    v.set(index,value);
-                    if (index>max_index) max_index=index;
-                }
-
-      out2:
-                data.push_back(example_t(v,label));
-            }
-            fclose(fp);
-            if(model_file)
-                printf("-> classes: %d\n",msz);
-            else
-                printf("-> examples: %d features: %d labels: %d\n",msz,max_index, nb_labels);
-            nb_ex = msz;
-            return msz;
         }
 
-        // ...
-        examples_t data;
-        int nb_ex;
-        int max_index;
-        int nb_labels;
+        example_t ()
+        {
+        }
+
+        SVector inpt;
+        int cls;
     };
+
+    typedef std::vector<example_t>  examples_t;
+
+    int libsvm_load_data (char *filename, bool model_file) {
+        int index; double value;
+        int elements, i;
+        FILE *fp = fopen(filename,"r");
+
+        if (fp == NULL) {
+            fprintf(stderr, "Can't open input file \"%s\"\n", filename);
+            exit(1);
+        } else {
+            printf("loading \"%s\"..  \n", filename);
+        }
+
+        int msz = 0;
+        elements = 0;
+
+        while (1) {
+            int c = fgetc(fp);
+
+            switch(c) {
+                case '\n': {
+                    ++msz;
+                    elements=0;
+                    break;
+                }
+                case ':': {
+                    ++elements;
+                    break;
+                }
+                case EOF: {
+                    goto out;
+                }
+                default: {
+                    ;
+                }
+            }
+        }
+
+out:
+        rewind(fp);
+        max_index = 0;
+        nb_labels = 0;
+
+        for ( i = 0; i < msz; i++) {
+            int label;
+            SVector v;
+            fscanf(fp,"%d",&label);
+            if ((int) label >= nb_labels) {
+                nb_labels = label;
+            }
+
+            while (1) {
+                int c;
+                do {
+                    c = getc(fp);
+                    if (c == '\n') {
+                        goto out2;
+                    }
+                } while (isspace(c));
+
+                ungetc(c,fp);
+                fscanf(fp, "%d:%lf", &index, &value);
+                v.set(index, value);
+                if (index > max_index) {
+                    max_index = index;
+                }
+            }
+out2:
+            data.push_back(example_t(v,label));
+        }
+
+        fclose(fp);
+
+        if (model_file) {
+            printf("-> classes: %d\n",msz);
+        } else {
+            printf("-> examples: %d features: %d labels: %d\n",msz,max_index, nb_labels);
+        }
+        nb_ex = msz;
+
+        return msz;
+    }
+
+public:
+    examples_t data;
+    int nb_ex;
+    int max_index;
+    int nb_labels;
+};
 
 
 // LARANKPATTERN: used to keep track of support patterns
