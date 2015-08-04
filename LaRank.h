@@ -148,8 +148,8 @@ class LaRankPattern
 {
 public:
 
-    LaRankPattern (int x_id, const SVector &x, int y)
-        : x_id(x_id), x(x), y(y)
+    LaRankPattern (int x_id, const SVector &x, int y, double w = 1.0)
+        : x_id(x_id), x(x), y(y), w(w)
     {
     }
 
@@ -172,6 +172,7 @@ public:
     int x_id;
     SVector x;
     int y;
+    double w; // Sample weight
 };
 
 // LARANKPATTERNS: collection of support patterns
@@ -279,8 +280,9 @@ public:
     virtual ~Machine() {};
 
     //MAIN functions for training and testing
-    virtual int add (const SVector &x, int classnumber, int x_id) = 0;
+    virtual int add (const SVector &x, int classnumber, int x_id, double weight = 1.0) = 0;
     virtual int predict (const SVector &x) = 0;
+    virtual int predict (const SVector &x, LaFVector &scores) = 0;
 
     // Functions for saving and loading model
     virtual void save_outputs (std::ostream &ostr) = 0;

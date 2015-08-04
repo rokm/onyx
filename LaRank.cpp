@@ -80,7 +80,7 @@ public:
 
     bool isSupportVector (int x_id) const
     {
-        return  beta.get(x_id) != 0;
+        return beta.get(x_id) != 0;
     }
 
     int getNSV () const
@@ -123,7 +123,7 @@ public:
     }
 
     // LEARNING FUNCTION: add new patterns and run optimization steps selected with dapatative schedule
-    virtual int add (const SVector &xi, int yi, int x_id)
+    virtual int add (const SVector &xi, int yi, int x_id, double weight)
     {
         nb_seen_examples++;
 
@@ -132,7 +132,7 @@ public:
             outputs.insert(std::make_pair(yi, LaRankOutput()));
         }
 
-        LaRankPattern tpattern(x_id, xi, yi);
+        LaRankPattern tpattern(x_id, xi, yi, weight);
         LaRankPattern &pattern = (patterns.isPattern(x_id)) ? patterns.getPattern(x_id) : tpattern;
 
         // ProcessNew with the "fresh" pattern
@@ -211,6 +211,28 @@ public:
                 score_max = score;
                 res = it->first;
             }
+        }
+
+        return res;
+    }
+
+    virtual int predict (const SVector &x, LaFVector &scores)
+    {
+        int res = -1;
+        double score_max = -DBL_MAX;
+        int nClass = 0;
+
+        scores.resize(outputs.size());
+
+        for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); it++) {
+            double score = it->second.computeScore(x);
+
+            if (score > score_max) {
+                score_max = score;
+                res = it->first;
+            }
+
+            scores.set(nClass++, score); // Store output score
         }
 
         return res;
@@ -399,7 +421,7 @@ private:
             bool support = ptype == processOptimize || output->isSupportVector(pattern.x_id);
             bool goodclass = current.output == pattern.y;
 
-            if ((!support && goodclass) || (support && output->getBeta(pattern.x_id) < (goodclass ? C : 0))) {
+            if ((!support && goodclass) || (support && output->getBeta(pattern.x_id) < (goodclass ? C * pattern.w : 0))) {
                 ygp = current;
                 outp = output;
                 break;
@@ -448,12 +470,12 @@ private:
             double beta = outp->getBeta(pattern.x_id);
 
             if (ygp.output == pattern.y) {
-                lambda = std::min(lambda, C - beta);
+                lambda = std::min(lambda, C * pattern.w - beta);
             } else {
                 lambda = std::min(lambda, fabs(beta));
             }
         } else {
-            lambda = std::min(lambda, C);
+            lambda = std::min(lambda, C * pattern.w);
         }
 
         // Update parameters
