@@ -29,7 +29,6 @@
 
 #include <chrono>
 
-#include "vectors.h"
 #include "LaRank.h"
 
 
@@ -39,7 +38,8 @@
 class LaRankOutput
 {
 public:
-    LaRankOutput ()
+    LaRankOutput (int numFeatures  = 0)
+        : wy(Eigen::VectorXd::Zero(numFeatures))
     {
     }
 
@@ -53,19 +53,19 @@ public:
     }
 
 
-    double computeGradient (const SVector &features, int label, int this_label)
+    double computeGradient (const Eigen::VectorXd &features, int label, int this_label)
     {
         return (label == this_label ? 1.0 : 0.0) - computeScore(features);
     }
 
-    double computeScore (const SVector &features)
+    double computeScore (const Eigen::VectorXd &features)
     {
-        return dot(wy, features);
+        return wy.dot(features);
     }
 
-    void update (const SVector &features, double lambda, int pattern_id)
+    void update (const Eigen::VectorXd &features, double lambda, int pattern_id)
     {
-        wy.add(features, lambda);
+        wy += lambda * features;
 
         // Update indicator value
         double beta_value = getBeta(pattern_id) + lambda;
@@ -76,16 +76,10 @@ public:
         }
     }
 
-    /*void save_output (std::ostream &ostr, int ythis) const
-    {
-        ostr << ythis << " " << wy;
-    }*/
-
     double getBeta (int pattern_id) const
     {
-        auto it = beta.find(pattern_id);
+        std::unordered_map<int, double>::const_iterator it = beta.find(pattern_id);
         return (it == beta.end()) ? 0.0 : it->second;
-        //return beta.get(pattern_id);
     }
 
     bool isSupportVector (int pattern_id) const
@@ -95,28 +89,20 @@ public:
 
     int getNSV () const
     {
-        /*int res = 0;
-
-        for (int i = 0; i < beta.size(); i++) {
-            if (beta.get(i) != 0) {
-                res++;
-            }
-        }
-        return res;*/
         return beta.size();
     }
 
     double getW2 () const
     {
-        return dot(wy, wy);
+        return wy.dot(wy);
     }
 
 private:
-    // BETA: beta value (indicator) of each support vector
-    //SVector beta;
+    // Beta (indicator) values of each support vector
     std::unordered_map<int, double> beta;
-    // WY: contains the prediction information
-    LaFVector wy;
+
+    // Hyperplane weights
+    Eigen::VectorXd wy;
 };
 
 
@@ -136,13 +122,13 @@ public:
     }
 
     // LEARNING FUNCTION: add new patterns and run optimization steps selected with dapatative schedule
-    virtual int add (const SVector &features, int label, double weight)
+    virtual int add (const Eigen::VectorXd &features, int label, double weight)
     {
         nb_seen_examples++;
 
         // create a new output object if never seen this one before
         if (!getOutput(label)) {
-            outputs.insert(std::make_pair(label, LaRankOutput()));
+            outputs.insert(std::make_pair(label, LaRankOutput(features.size())));
         }
 
         LaRankPattern pattern(nb_seen_examples, features, label, weight);
@@ -215,13 +201,13 @@ public:
     }
 
     // PREDICTION FUNCTION: main function in la_rank_classify
-    virtual int predict (const SVector &x)
+    virtual int predict (const Eigen::VectorXd &features)
     {
         int res = -1;
         double score_max = -DBL_MAX;
 
         for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); ++it) {
-            double score = it->second.computeScore(x);
+            double score = it->second.computeScore(features);
 
             if (score > score_max) {
                 score_max = score;
@@ -232,7 +218,7 @@ public:
         return res;
     }
 
-    virtual int predict (const SVector &x, LaFVector &scores)
+    virtual int predict (const Eigen::VectorXd &features, Eigen::VectorXd &scores)
     {
         int res = -1;
         double score_max = -DBL_MAX;
@@ -241,14 +227,14 @@ public:
         scores.resize(outputs.size());
 
         for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); it++) {
-            double score = it->second.computeScore(x);
+            double score = it->second.computeScore(features);
 
             if (score > score_max) {
                 score_max = score;
                 res = it->first;
             }
 
-            scores.set(nClass++, score); // Store output score
+            scores[nClass++] = score; // Store output score
         }
 
         return res;
@@ -480,7 +466,7 @@ private:
         }
 
         // Compute lambda and clip it
-        double kii = dot(pattern.x,pattern.x);
+        double kii = /*dot(pattern.x,pattern.x);*/ pattern.x.dot(pattern.x);
         double lambda = (ygp.gradient - ygm.gradient) / (2 * kii);
         if (ptype == processOptimize || outp->isSupportVector(pattern.x_id)) {
             double beta = outp->getBeta(pattern.x_id);
@@ -569,30 +555,8 @@ private:
     {
         double res = 0.0;
 
-        for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); ++it) {
+        for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
             res += it->second.getW2();
-        }
-
-        return res;
-    }
-
-    // Square-norm of the weight vector w (another way of computing it, very costly)
-    double computeW2 ()
-    {
-        double res = 0.0;
-
-        for (unsigned i = 0; i < patterns.maxcount(); i++) {
-            const LaRankPattern &p = patterns[i];
-
-            if (!p.exists()) {
-                continue;
-            }
-
-            for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); it++) {
-                if (it->second.getBeta(p.x_id)) {
-                    res += it->second.getBeta(p.x_id) * it->second.computeScore(p.x);
-                }
-            }
         }
 
         return res;
