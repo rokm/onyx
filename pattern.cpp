@@ -36,7 +36,7 @@ Pattern::~Pattern ()
 }
 
 
-bool Pattern::exists () const
+bool Pattern::isValid () const
 {
     return id >= 0;
 }

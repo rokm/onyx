@@ -89,8 +89,8 @@ private:
     };
 
 private:
-    Output *getOutput (int index);
-    const Output *getOutput (int index) const;
+    Output *getOutput (int label);
+    const Output *getOutput (int label) const;
 
     process_return_t process (const Pattern &pattern, process_type_t ptype);
     double reprocess ();
@@ -176,7 +176,7 @@ int LaRank::update (const Eigen::VectorXd &features, int label, double weight)
 
     // If we have not seen this class before, create a new output decision
     // function
-    if (!getOutput(label)) {
+    if (!outputs.count(label)) {
         outputs.insert(std::make_pair(label, Output(features.size())));
     }
 
@@ -280,23 +280,23 @@ double LaRank::computeDualityGap () const
     double sum_bi = 0.0;
 
     for (unsigned i = 0; i < patterns.maxcount(); i++) {
-        const Pattern &p = patterns[i];
-        if (!p.exists()) {
+        const Pattern &pattern = patterns[i];
+        if (!pattern.isValid()) {
             continue;
         }
 
-        const Output *out = getOutput(p.label);
+        const Output *out = getOutput(pattern.label);
         if (!out) {
             continue;
         }
 
-        sum_bi += out->getBeta(p.id);
-        double gi = out->computeGradient(p.features, p.label, p.label);
+        sum_bi += out->getBeta(pattern.id);
+        double gi = out->computeGradient(pattern.features, pattern.label, pattern.label);
         double gmin = std::numeric_limits<double>::max();
 
         for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
-            if (it->first != p.label && it->second.isSupportVector(p.id)) {
-                double g = it->second.computeGradient(p.features, p.label, it->first);
+            if (it->first != pattern.label && it->second.isSupportVector(pattern.id)) {
+                double g = it->second.computeGradient(pattern.features, pattern.label, it->first);
                 if (g < gmin) {
                     gmin = g;
                 }
@@ -313,15 +313,15 @@ double LaRank::computeDualityGap () const
 // *********************************************************************
 // *                            Processing                             *
 // *********************************************************************
-Output *LaRank::getOutput (int index)
+Output *LaRank::getOutput (int label)
 {
-    outputhash_t::iterator it = outputs.find(index);
+    outputhash_t::iterator it = outputs.find(label);
     return it == outputs.end() ? NULL : &it->second;
 }
 
-const Output *LaRank::getOutput (int index) const
+const Output *LaRank::getOutput (int label) const
 {
-    outputhash_t::const_iterator it = outputs.find(index);
+    outputhash_t::const_iterator it = outputs.find(label);
     return it == outputs.end() ? NULL : &it->second;
 }
 
@@ -331,13 +331,13 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
     process_return_t pro_ret = process_return_t(0, 0);
 
     std::vector<outputgradient_t> outputgradients;
-    outputgradients.reserve(/*getNumOutputs()*/outputs.size());
+    outputgradients.reserve(outputs.size());
 
     std::vector<outputgradient_t> outputscores;
-    outputscores.reserve(/*getNumOutputs()*/outputs.size());
+    outputscores.reserve(outputs.size());
 
     // Compute gradient and sort
-    for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); it++) {
+    for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
         if (ptype != processOptimize || it->second.isSupportVector(pattern.id)) {
             double g = it->second.computeGradient(pattern.features, pattern.label, it->first);
 
@@ -365,7 +365,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
         outputgradient_t &current = outputgradients[p];
         Output *output = getOutput(current.output);
 
-        bool support = ptype == processOptimize || output->isSupportVector(pattern.id);
+        bool support = (ptype == processOptimize || output->isSupportVector(pattern.id));
         bool goodclass = (current.output == pattern.label);
 
         if ((!support && goodclass) || (support && output->getBeta(pattern.id) < (goodclass ? C * pattern.weight : 0))) {
@@ -387,7 +387,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
         outputgradient_t &current = outputgradients[m];
         Output *output = getOutput(current.output);
 
-        bool support = ptype == processOptimize || output->isSupportVector(pattern.id);
+        bool support = (ptype == processOptimize || output->isSupportVector(pattern.id));
         bool goodclass = (current.output == pattern.label);
 
         if (!goodclass || (support && output->getBeta(pattern.id) > 0)) {
@@ -468,8 +468,8 @@ unsigned int LaRank::cleanup ()
     unsigned int res = 0;
 
     for (unsigned int i = 0; i < patterns.maxcount(); i++) {
-        Pattern &p = patterns[i];
-        if (p.exists() && !outputs[p.label].isSupportVector(p.id)) {
+        Pattern &pattern = patterns[i];
+        if (pattern.isValid() && !outputs[pattern.label].isSupportVector(pattern.id)) {
             patterns.remove(i);
             res++;
         }
@@ -512,18 +512,18 @@ double LaRank::getDualObjective () const
     double res = 0.0;
 
     for (unsigned int i = 0; i < patterns.maxcount(); ++i) {
-        const Pattern &p = patterns[i];
+        const Pattern &pattern = patterns[i];
 
-        if (!p.exists()) {
+        if (!pattern.isValid()) {
             continue;
         }
 
-        const Output *out = getOutput(p.label);
+        const Output *out = getOutput(pattern.label);
         if (!out) {
             continue;
         }
 
-        res += out->getBeta(p.id);
+        res += out->getBeta(pattern.id);
     }
 
     return res - getW2() / 2;
@@ -539,25 +539,3 @@ Classifier *create_linear_larank ()
 }
 
 }; // LinearLaRank
-
-
-
-#if 0
-class LaRank : public Machine
-{
-public:
-
-
-    LaRankOutput *getOutput (int index)
-    {
-        outputhash_t::iterator it = outputs.find(index);
-        return it == outputs.end() ? NULL : &it->second;
-    }
-
-    const LaRankOutput *getOutput (int index) const
-    {
-        outputhash_t::const_iterator it = outputs.find(index);
-        return it == outputs.end() ? NULL : &it->second;
-    }
-
-#endif

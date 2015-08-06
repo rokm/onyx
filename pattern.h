@@ -33,7 +33,7 @@ public:
 
     virtual ~Pattern ();
 
-    bool exists () const;
+    bool isValid () const;
 
     void clear ();
 
