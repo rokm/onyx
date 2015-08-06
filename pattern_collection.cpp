@@ -63,7 +63,7 @@ Pattern &PatternCollection::sample ()
     assert(!empty());
     while (true) {
         unsigned r = rand() % patterns.size();
-        if (patterns[r].exists()) {
+        if (patterns[r].isValid()) {
             return patterns[r];
         }
     }

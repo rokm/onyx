@@ -18,7 +18,7 @@
 
 #include "larank.h"
 
-#include "output.h"
+#include "decision_function.h"
 #include "pattern.h"
 #include "pattern_collection.h"
 
@@ -45,24 +45,24 @@ public:
     virtual double getTau () const;
     virtual void setTau (double);
 
-    virtual int update (const Eigen::VectorXd &x, int classnumber, double weight);
+    virtual int update (const Eigen::VectorXd &x, int label, double weight);
     virtual int predict (const Eigen::VectorXd &x, Eigen::VectorXd &scores) const;
 
     virtual double computeDualityGap () const;
 
 private:
-    // Output class gradient information
-    struct outputgradient_t
+    // Per-class gradient
+    struct gradient_t
     {
-        int output;
+        int label;
         double gradient;
 
-        outputgradient_t (int output = 0, double gradient = 0.0)
-            : output(output), gradient(gradient)
+        gradient_t (int label = 0, double gradient = 0.0)
+            : label(label), gradient(gradient)
         {
         }
 
-        bool operator < (const outputgradient_t &og) const
+        bool operator < (const gradient_t &og) const
         {
             return gradient > og.gradient;
         }
@@ -89,8 +89,8 @@ private:
     };
 
 private:
-    Output *getOutput (int label);
-    const Output *getOutput (int label) const;
+    DecisionFunction *getDecisionFunction (int label);
+    const DecisionFunction *getDecisionFunction (int label) const;
 
     process_return_t process (const Pattern &pattern, process_type_t ptype);
     double reprocess ();
@@ -107,11 +107,10 @@ private:
     double tau = 0.0001;
 
     // Learnt output decision functions
-    typedef std::map<int, Output> outputhash_t; // class index -> decision function
-    outputhash_t outputs;
+    std::map<int, DecisionFunction> decision_functions;
 
     // State
-    PatternCollection patterns;
+    PatternCollection stored_patterns;
 
     uint64_t num_seen_samples = 0;
     uint64_t num_removed = 0;
@@ -174,10 +173,10 @@ int LaRank::update (const Eigen::VectorXd &features, int label, double weight)
     // Update counter of seen samples
     num_seen_samples++;
 
-    // If we have not seen this class before, create a new output decision
+    // If we have not seen this class before, create a new decision
     // function
-    if (!outputs.count(label)) {
-        outputs.insert(std::make_pair(label, Output(features.size())));
+    if (!decision_functions.count(label)) {
+        decision_functions.insert(std::make_pair(label, DecisionFunction(features.size())));
     }
 
     // Fill pattern element
@@ -254,9 +253,9 @@ int LaRank::predict (const Eigen::VectorXd &features, Eigen::VectorXd &scores) c
     double score_max = -std::numeric_limits<double>::max();
     int nClass = 0;
 
-    scores.resize(outputs.size());
+    scores.resize(decision_functions.size());
 
-    for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
+    for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         double score = it->second.computeScore(features);
 
         if (score > score_max) {
@@ -279,13 +278,13 @@ double LaRank::computeDualityGap () const
     double sum_sl = 0.0;
     double sum_bi = 0.0;
 
-    for (unsigned i = 0; i < patterns.maxcount(); i++) {
-        const Pattern &pattern = patterns[i];
+    for (unsigned i = 0; i < stored_patterns.maxcount(); i++) {
+        const Pattern &pattern = stored_patterns[i];
         if (!pattern.isValid()) {
             continue;
         }
 
-        const Output *out = getOutput(pattern.label);
+        const DecisionFunction *out = getDecisionFunction(pattern.label);
         if (!out) {
             continue;
         }
@@ -294,7 +293,7 @@ double LaRank::computeDualityGap () const
         double gi = out->computeGradient(pattern.features, pattern.label, pattern.label);
         double gmin = std::numeric_limits<double>::max();
 
-        for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
+        for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
             if (it->first != pattern.label && it->second.isSupportVector(pattern.id)) {
                 double g = it->second.computeGradient(pattern.features, pattern.label, it->first);
                 if (g < gmin) {
@@ -313,16 +312,16 @@ double LaRank::computeDualityGap () const
 // *********************************************************************
 // *                            Processing                             *
 // *********************************************************************
-Output *LaRank::getOutput (int label)
+DecisionFunction *LaRank::getDecisionFunction (int label)
 {
-    outputhash_t::iterator it = outputs.find(label);
-    return it == outputs.end() ? NULL : &it->second;
+    auto it = decision_functions.find(label);
+    return it == decision_functions.end() ? NULL : &it->second;
 }
 
-const Output *LaRank::getOutput (int label) const
+const DecisionFunction *LaRank::getDecisionFunction (int label) const
 {
-    outputhash_t::const_iterator it = outputs.find(label);
-    return it == outputs.end() ? NULL : &it->second;
+    auto it = decision_functions.find(label);
+    return it == decision_functions.end() ? NULL : &it->second;
 }
 
 // Main optimization step
@@ -330,43 +329,43 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 {
     process_return_t pro_ret = process_return_t(0, 0);
 
-    std::vector<outputgradient_t> outputgradients;
-    outputgradients.reserve(outputs.size());
+    std::vector<gradient_t> gradients;
+    gradients.reserve(decision_functions.size());
 
-    std::vector<outputgradient_t> outputscores;
-    outputscores.reserve(outputs.size());
+    std::vector<gradient_t> scores;
+    scores.reserve(decision_functions.size());
 
     // Compute gradient and sort
-    for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
+    for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         if (ptype != processOptimize || it->second.isSupportVector(pattern.id)) {
             double g = it->second.computeGradient(pattern.features, pattern.label, it->first);
 
-            outputgradients.push_back(outputgradient_t(it->first, g));
+            gradients.push_back(gradient_t(it->first, g));
 
             if (it->first == pattern.label) {
-                outputscores.push_back(outputgradient_t(it->first,(1.0 - g)));
+                scores.push_back(gradient_t(it->first,(1.0 - g)));
             } else {
-                outputscores.push_back(outputgradient_t(it->first, -g));
+                scores.push_back(gradient_t(it->first, -g));
             }
         }
     }
 
-    std::sort(outputgradients.begin(), outputgradients.end());
+    std::sort(gradients.begin(), gradients.end());
 
     // Determine the prediction and its confidence
-    std::sort(outputscores.begin(), outputscores.end());
-    pro_ret.ypred = outputscores[0].output;
+    std::sort(scores.begin(), scores.end());
+    pro_ret.ypred = scores[0].label;
 
     // Find yp
-    outputgradient_t ygp;
-    Output *outp = NULL;
-    unsigned p;
-    for (p = 0; p < outputgradients.size(); p++) {
-        outputgradient_t &current = outputgradients[p];
-        Output *output = getOutput(current.output);
+    gradient_t ygp;
+    DecisionFunction *outp = NULL;
+    unsigned int p;
+    for (p = 0; p < gradients.size(); p++) {
+        gradient_t &current = gradients[p];
+        DecisionFunction *output = getDecisionFunction(current.label);
 
         bool support = (ptype == processOptimize || output->isSupportVector(pattern.id));
-        bool goodclass = (current.output == pattern.label);
+        bool goodclass = (current.label == pattern.label);
 
         if ((!support && goodclass) || (support && output->getBeta(pattern.id) < (goodclass ? C * pattern.weight : 0))) {
             ygp = current;
@@ -375,20 +374,20 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
         }
     }
 
-    if (p == outputgradients.size()) {
+    if (p == gradients.size()) {
         return pro_ret;
     }
 
     // Find ym
-    outputgradient_t ygm;
-    Output *outm = NULL;
+    gradient_t ygm;
+    DecisionFunction *outm = NULL;
     int m;
-    for (m = outputgradients.size() - 1; m >= 0; m--) {
-        outputgradient_t &current = outputgradients[m];
-        Output *output = getOutput(current.output);
+    for (m = gradients.size() - 1; m >= 0; m--) {
+        gradient_t &current = gradients[m];
+        DecisionFunction *output = getDecisionFunction(current.label);
 
         bool support = (ptype == processOptimize || output->isSupportVector(pattern.id));
-        bool goodclass = (current.output == pattern.label);
+        bool goodclass = (current.label == pattern.label);
 
         if (!goodclass || (support && output->getBeta(pattern.id) > 0)) {
             ygm = current;
@@ -407,7 +406,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
     }
 
     if (ptype == processNew) {
-        patterns.insert(pattern);
+        stored_patterns.insert(pattern);
     }
 
     // Compute lambda and clip it
@@ -416,7 +415,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
     if (ptype == processOptimize || outp->isSupportVector(pattern.id)) {
         double beta = outp->getBeta(pattern.id);
 
-        if (ygp.output == pattern.label) {
+        if (ygp.label == pattern.label) {
             lambda = std::min(lambda, C * pattern.weight - beta);
         } else {
             lambda = std::min(lambda, fabs(beta));
@@ -436,14 +435,15 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 // 2nd optimization function (ProcessOld in the paper)
 double LaRank::reprocess ()
 {
-    if (patterns.size()) {
+    if (stored_patterns.size()) {
         for (int n = 0; n < 10; n++) {
-            process_return_t pro_ret = process(patterns.sample(), processOld);
+            process_return_t pro_ret = process(stored_patterns.sample(), processOld);
             if (pro_ret.dual_increase) {
                 return pro_ret.dual_increase;
             }
         }
     }
+
     return 0.0;
 }
 
@@ -452,9 +452,9 @@ double LaRank::optimize ()
 {
     double dual_increase = 0.0;
 
-    if (patterns.size()) {
+    if (stored_patterns.size()) {
         for (int n = 0; n < 10; n++) {
-            process_return_t pro_ret = process(patterns.sample(), processOptimize);
+            process_return_t pro_ret = process(stored_patterns.sample(), processOptimize);
             dual_increase += pro_ret.dual_increase;
         }
     }
@@ -467,10 +467,10 @@ unsigned int LaRank::cleanup ()
 {
     unsigned int res = 0;
 
-    for (unsigned int i = 0; i < patterns.maxcount(); i++) {
-        Pattern &pattern = patterns[i];
-        if (pattern.isValid() && !outputs[pattern.label].isSupportVector(pattern.id)) {
-            patterns.remove(i);
+    for (unsigned int i = 0; i < stored_patterns.maxcount(); i++) {
+        Pattern &pattern = stored_patterns[i];
+        if (pattern.isValid() && !decision_functions[pattern.label].isSupportVector(pattern.id)) {
+            stored_patterns.remove(i);
             res++;
         }
     }
@@ -487,7 +487,7 @@ int LaRank::getNSV () const
 {
     int res = 0;
 
-    for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
+    for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         res += it->second.getNSV();
     }
 
@@ -499,7 +499,7 @@ double LaRank::getW2 () const
 {
     double res = 0.0;
 
-    for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); it++) {
+    for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         res += it->second.getW2();
     }
 
@@ -511,14 +511,14 @@ double LaRank::getDualObjective () const
 {
     double res = 0.0;
 
-    for (unsigned int i = 0; i < patterns.maxcount(); ++i) {
-        const Pattern &pattern = patterns[i];
+    for (unsigned int i = 0; i < stored_patterns.maxcount(); i++) {
+        const Pattern &pattern = stored_patterns[i];
 
         if (!pattern.isValid()) {
             continue;
         }
 
-        const Output *out = getOutput(pattern.label);
+        const DecisionFunction *out = getDecisionFunction(pattern.label);
         if (!out) {
             continue;
         }

@@ -16,8 +16,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__OUTPUT_H
-#define LINEAR_LARANK__OUTPUT_H
+#ifndef LINEAR_LARANK__DECISION_FUNCTION_H
+#define LINEAR_LARANK__DECISION_FUNCTION_H
 
 #include <Eigen/Core>
 
@@ -27,29 +27,30 @@
 namespace LinearLaRank {
 
 
-class Output
+class DecisionFunction
 {
 public:
-    Output (int numFeatures = 0);
+    DecisionFunction (int numFeatures = 0);
 
-    virtual ~Output ();
+    virtual ~DecisionFunction ();
 
     double computeGradient (const Eigen::VectorXd &features, int label, int this_label) const;
     double computeScore (const Eigen::VectorXd &features) const;
-    void update (const Eigen::VectorXd &features, double lambda, int pattern_id);
 
-    double getBeta (int pattern_id) const;
-    bool isSupportVector (int pattern_id) const;
+    void update (const Eigen::VectorXd &features, double lambda, int64_t pattern_id);
+
+    double getBeta (int64_t pattern_id) const;
+    bool isSupportVector (int64_t pattern_id) const;
 
     int getNSV () const;
     double getW2 () const;
 
 private:
     // Beta (indicator) values of each support vector
-    std::unordered_map<int, double> beta;
+    std::unordered_map<int64_t, double> beta;
 
     // Hyperplane weights
-    Eigen::VectorXd wy;
+    Eigen::VectorXd w;
 };
 
 
