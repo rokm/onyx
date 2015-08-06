@@ -27,6 +27,8 @@
 #include <cfloat>
 #include <cassert>
 
+#include <chrono>
+
 #include "vectors.h"
 #include "LaRank.h"
 
@@ -146,11 +148,13 @@ public:
         LaRankPattern pattern(nb_seen_examples, features, label, weight);
 
         // ProcessNew with the "fresh" pattern
-        double time1 = getTime();
+        auto timeStart = std::chrono::steady_clock::now();
+
         process_return_t pro_ret = process(pattern, processNew);
         double dual_increase = pro_ret.dual_increase;
         dual += dual_increase;
-        double duration = (getTime() - time1);
+
+        double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart).count();
         double coeff = dual_increase / (10*(0.00001 + duration));
         n_pro++;
         w_pro = 0.05 * coeff + (1 - 0.05) * w_pro;
@@ -177,23 +181,25 @@ public:
             if (r <= w_pro) {
                 break;
             } else if ( (r > w_pro) && (r <= w_pro + w_rep) ) {
-                double time1 = getTime();
+                auto timeStart = std::chrono::steady_clock::now();
+
                 double dual_increase = reprocess();
 
                 dual += dual_increase;
 
-                double duration = (getTime() - time1);
+                double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart).count();
                 double coeff = dual_increase / (0.00001 + duration);
 
                 n_rep++;
                 w_rep = 0.05 * coeff + (1 - 0.05) * w_rep;
             } else {
-                double time1 = getTime();
+                auto timeStart = std::chrono::steady_clock::now();
+
                 double dual_increase = optimize();
 
                 dual += dual_increase;
 
-                double duration = (getTime() - time1);
+                double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart).count();
                 double coeff = dual_increase / (0.00001 + duration);
 
                 n_opt++;
@@ -300,7 +306,7 @@ public:
     // Display stuffs along learning
     virtual void printStuff (double initime, bool dual)
     {
-        std::cout << "Current duration (CPUs): " << getTime() - initime << std::endl;
+        //std::cout << "Current duration (CPUs): " << getTime() - initime << std::endl;
         if (dual) {
             std::cout << "Dual: " << getDual() << " (w2: " << getW2() << ")" << std::endl;
         }

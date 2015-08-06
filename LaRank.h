@@ -24,8 +24,6 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
-#include <ctime>
-#include <sys/time.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <cmath>
@@ -306,21 +304,5 @@ public:
 };
 
 extern Machine *create_larank ();
-
-inline double getTime ()
-{
-    struct timeval tv;
-    struct timezone tz;
-    long int sec;
-    long int usec;
-    double mytime;
-
-    gettimeofday(&tv, &tz);
-    sec = (long int)tv.tv_sec;
-    usec = (long int)tv.tv_usec;
-    mytime = (double)sec + usec*0.000001;
-
-    return mytime;
-}
 
 #endif // LARANK_H
