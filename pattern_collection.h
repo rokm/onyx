@@ -43,16 +43,15 @@ public:
 
     unsigned size () const;
 
-    Pattern &sample ();
-
+    const Pattern &sample () const;
 
     unsigned maxcount () const;
 
-    Pattern &operator [] (unsigned i);
-    const Pattern &operator [] (unsigned i) const;
+    Pattern &operator [] (unsigned int i);
+    const Pattern &operator [] (unsigned int i) const;
 
 private:
-    std::unordered_set<unsigned> freeidx;
+    std::unordered_set<unsigned int> freeidx;
     std::vector<Pattern> patterns;
 };
 

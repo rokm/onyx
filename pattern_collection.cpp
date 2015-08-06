@@ -33,7 +33,7 @@ PatternCollection::~PatternCollection ()
 void PatternCollection::insert (const Pattern &pattern)
 {
     if (freeidx.size()) {
-        std::unordered_set<unsigned>::iterator it = freeidx.begin();
+        auto it = freeidx.begin();
         patterns[*it] = pattern;
         freeidx.erase(it);
     } else {
@@ -41,7 +41,7 @@ void PatternCollection::insert (const Pattern &pattern)
     }
 }
 
-void PatternCollection::remove (unsigned i)
+void PatternCollection::remove (unsigned int i)
 {
     patterns[i].clear();
     freeidx.insert(i);
@@ -58,7 +58,7 @@ unsigned PatternCollection::size () const
     return patterns.size() - freeidx.size();
 }
 
-Pattern &PatternCollection::sample ()
+const Pattern &PatternCollection::sample () const
 {
     assert(!empty());
     while (true) {
@@ -76,12 +76,12 @@ unsigned PatternCollection::maxcount () const
     return patterns.size();
 }
 
-Pattern &PatternCollection::operator [] (unsigned i)
+Pattern &PatternCollection::operator [] (unsigned int i)
 {
     return patterns[i];
 }
 
-const Pattern &PatternCollection::operator [] (unsigned i) const
+const Pattern &PatternCollection::operator [] (unsigned int i) const
 {
     return patterns[i];
 }
