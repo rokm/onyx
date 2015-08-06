@@ -38,7 +38,7 @@ public:
     void clear ();
 
 public:
-    uint64_t id; // ID (effectively sample number)
+    int64_t id; // ID (effectively sample number)
     Eigen::VectorXd features; // Feature vector
     int label; // Label
     double weight; // Weight

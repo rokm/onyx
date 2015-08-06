@@ -27,7 +27,7 @@ Pattern::Pattern (int id, const Eigen::VectorXd &features, int label, double wei
 }
 
 Pattern::Pattern ()
-    : id(0)
+    : id(-1)
 {
 }
 
