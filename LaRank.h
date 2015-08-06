@@ -189,27 +189,29 @@ public:
 
     void insert (const LaRankPattern &pattern)
     {
-        if (!isPattern(pattern.x_id)) {
+        /*if (!isPattern(pattern.x_id)) {*/
             if (freeidx.size()) {
                 std::unordered_set<unsigned>::iterator it = freeidx.begin();
                 patterns[*it] = pattern;
-                x_id2rank[pattern.x_id] = *it;
+/*                x_id2rank[pattern.x_id] = *it;*/
                 freeidx.erase(it);
             } else {
                 patterns.push_back(pattern);
-                x_id2rank[pattern.x_id] = patterns.size() - 1;
+                /*x_id2rank[pattern.x_id] = patterns.size() - 1;*/
             }
-        } else {
+        /*} else {
             int rank = getPatternRank(pattern.x_id);
             patterns[rank]=pattern;
-        }
+        }*/
+        std::cout << "Inserted pattern: " << pattern.x_id << ", patterns size: " << patterns.size() << "(actual " << size() << ")" << std::endl;
     }
 
     void remove (unsigned i)
     {
-        x_id2rank[patterns[i].x_id] = 0;
+        /*x_id2rank[patterns[i].x_id] = 0;*/
         patterns[i].clear();
         freeidx.insert(i);
+        std::cout << "Removed pattern at " << i << ", patterns size: " << patterns.size() << "(actual " << size() << ")" << std::endl;
     }
 
     bool empty () const
@@ -235,21 +237,21 @@ public:
         return patterns[0];
     }
 
-    unsigned getPatternRank (int x_id)
+    /*unsigned getPatternRank (int x_id)
     {
         return x_id2rank[x_id];
-    }
+    }*/
 
-    bool isPattern (int x_id)
+    /*bool isPattern (int x_id)
     {
         return x_id2rank[x_id]!=0;
-    }
+    }*/
 
-    LaRankPattern &getPattern (int x_id)
+    /*LaRankPattern &getPattern (int x_id)
     {
         unsigned rank = x_id2rank[x_id];
         return patterns[rank];
-    }
+    }*/
 
     unsigned maxcount () const
     {
@@ -269,7 +271,7 @@ public:
 private:
     std::unordered_set<unsigned> freeidx;
     std::vector<LaRankPattern> patterns;
-    std::unordered_map<int, unsigned> x_id2rank;
+    /*std::unordered_map<int, unsigned> x_id2rank;*/
 };
 
 
@@ -280,13 +282,13 @@ public:
     virtual ~Machine() {};
 
     //MAIN functions for training and testing
-    virtual int add (const SVector &x, int classnumber, int x_id, double weight = 1.0) = 0;
+    virtual int add (const SVector &x, int classnumber, double weight = 1.0) = 0;
     virtual int predict (const SVector &x) = 0;
     virtual int predict (const SVector &x, LaFVector &scores) = 0;
 
     // Functions for saving and loading model
-    virtual void save_outputs (std::ostream &ostr) = 0;
-    virtual void add_output (int y, LaFVector wy)    = 0;
+    /*virtual void save_outputs (std::ostream &ostr) = 0;
+    virtual void add_output (int y, LaFVector wy)    = 0;*/
 
     // Information functions
     virtual void printStuff(double initime, bool dual) = 0;

@@ -41,57 +41,67 @@ public:
     {
     }
 
-    LaRankOutput (LaFVector &w)
+    /*LaRankOutput (LaFVector &w)
         : wy(w)
     {
-    }
+    }*/
 
     virtual ~LaRankOutput ()
     {
     }
 
 
-    double computeGradient (const SVector &xi, int yi, int ythis)
+    double computeGradient (const SVector &features, int label, int this_label)
     {
-        return (yi == ythis ? 1 : 0) - computeScore(xi);
+        return (label == this_label ? 1.0 : 0.0) - computeScore(features);
     }
 
-    double computeScore (const SVector &x)
+    double computeScore (const SVector &features)
     {
-        return dot(wy, x);
+        return dot(wy, features);
     }
 
-    void update (const SVector &xi, double lambda, int xi_id)
+    void update (const SVector &features, double lambda, int pattern_id)
     {
-        wy.add(xi, lambda);
-        double oldb = beta.get(xi_id);
-        beta.set(xi_id, oldb+lambda);
+        wy.add(features, lambda);
+
+        // Update indicator value
+        double beta_value = getBeta(pattern_id) + lambda;
+        if (beta_value != 0.0)  {
+            beta[pattern_id] = beta_value;
+        } else {
+            beta.erase(pattern_id);
+        }
     }
 
-    void save_output (std::ostream &ostr, int ythis) const
+    /*void save_output (std::ostream &ostr, int ythis) const
     {
         ostr << ythis << " " << wy;
+    }*/
+
+    double getBeta (int pattern_id) const
+    {
+        auto it = beta.find(pattern_id);
+        return (it == beta.end()) ? 0.0 : it->second;
+        //return beta.get(pattern_id);
     }
 
-    double getBeta (int x_id) const
+    bool isSupportVector (int pattern_id) const
     {
-        return beta.get(x_id);
-    }
-
-    bool isSupportVector (int x_id) const
-    {
-        return beta.get(x_id) != 0;
+        return getBeta(pattern_id) != 0;
     }
 
     int getNSV () const
     {
-        int res=0;
+        /*int res = 0;
+
         for (int i = 0; i < beta.size(); i++) {
             if (beta.get(i) != 0) {
                 res++;
             }
         }
-        return res;
+        return res;*/
+        return beta.size();
     }
 
     double getW2 () const
@@ -101,7 +111,8 @@ public:
 
 private:
     // BETA: beta value (indicator) of each support vector
-    SVector beta;
+    //SVector beta;
+    std::unordered_map<int, double> beta;
     // WY: contains the prediction information
     LaFVector wy;
 };
@@ -123,17 +134,16 @@ public:
     }
 
     // LEARNING FUNCTION: add new patterns and run optimization steps selected with dapatative schedule
-    virtual int add (const SVector &xi, int yi, int x_id, double weight)
+    virtual int add (const SVector &features, int label, double weight)
     {
         nb_seen_examples++;
 
         // create a new output object if never seen this one before
-        if (!getOutput(yi)) {
-            outputs.insert(std::make_pair(yi, LaRankOutput()));
+        if (!getOutput(label)) {
+            outputs.insert(std::make_pair(label, LaRankOutput()));
         }
 
-        LaRankPattern tpattern(x_id, xi, yi, weight);
-        LaRankPattern &pattern = (patterns.isPattern(x_id)) ? patterns.getPattern(x_id) : tpattern;
+        LaRankPattern pattern(nb_seen_examples, features, label, weight);
 
         // ProcessNew with the "fresh" pattern
         double time1 = getTime();
@@ -146,7 +156,7 @@ public:
         w_pro = 0.05 * coeff + (1 - 0.05) * w_pro;
 
         // ProcessOld & Optimize until ready for a new processNew
-        // (Adaptative schedule here)
+        // (Adaptive schedule here)
         for (;;) {
             double w_sum = w_pro + w_rep + w_opt;
             double prop_min = w_sum / 20;
@@ -239,16 +249,16 @@ public:
     }
 
     // Used for saving a model file
-    virtual void save_outputs (std::ostream &ostr) {
+    /*virtual void save_outputs (std::ostream &ostr) {
         for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); ++it) {
             it->second.save_output(ostr, it->first);
         }
-    }
+    }*/
 
     // Used for loading a model file
-    virtual void add_output (int y, LaFVector wy) {
+    /*virtual void add_output (int y, LaFVector wy) {
         outputs.insert(std::make_pair(y, LaRankOutput(wy)));
-    }
+    }*/
 
 
     // Compute Duality gap (costly but used in stopping criteria in batch mode)
@@ -397,7 +407,7 @@ private:
                 outputgradients.push_back(outputgradient_t(it->first, g));
 
                 if (it->first == pattern.y) {
-                    outputscores.push_back(outputgradient_t(it->first,(1 - g)));
+                    outputscores.push_back(outputgradient_t(it->first,(1.0 - g)));
                 } else {
                     outputscores.push_back(outputgradient_t(it->first, -g));
                 }
@@ -506,7 +516,7 @@ private:
         double dual_increase = 0.0;
 
         if (patterns.size()) {
-            for (int n = 0; n < 10; ++n) {
+            for (int n = 0; n < 10; n++) {
                 process_return_t pro_ret = process(patterns.sample(), processOptimize);
                 dual_increase += pro_ret.dual_increase;
             }
@@ -520,7 +530,7 @@ private:
     {
         unsigned res = 0;
 
-        for (unsigned i = 0; i < patterns.size(); ++i) {
+        for (unsigned i = 0; i < patterns.maxcount(); i++) {
             LaRankPattern &p = patterns[i];
             if (p.exists() && !outputs[p.y].isSupportVector(p.x_id)) {
                 patterns.remove(i);
