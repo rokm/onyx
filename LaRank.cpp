@@ -16,16 +16,10 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA
 
 
-#include <iostream>
-#include <vector>
 #include <algorithm>
-
-#include <cstdlib>
-#include <cstdarg>
-#include <cstdio>
-#include <cstring>
-#include <cfloat>
-#include <cassert>
+#include <limits>
+#include <map>
+#include <vector>
 
 #include <chrono>
 
@@ -42,11 +36,6 @@ public:
         : wy(Eigen::VectorXd::Zero(numFeatures))
     {
     }
-
-    /*LaRankOutput (LaFVector &w)
-        : wy(w)
-    {
-    }*/
 
     virtual ~LaRankOutput ()
     {
@@ -94,7 +83,7 @@ public:
 
     double getW2 () const
     {
-        return wy.dot(wy);
+        return wy.squaredNorm();
     }
 
 private:
@@ -204,7 +193,7 @@ public:
     virtual int predict (const Eigen::VectorXd &features)
     {
         int res = -1;
-        double score_max = -DBL_MAX;
+        double score_max = -std::numeric_limits<double>::max();
 
         for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); ++it) {
             double score = it->second.computeScore(features);
@@ -221,7 +210,7 @@ public:
     virtual int predict (const Eigen::VectorXd &features, Eigen::VectorXd &scores)
     {
         int res = -1;
-        double score_max = -DBL_MAX;
+        double score_max = -std::numeric_limits<double>::max();
         int nClass = 0;
 
         scores.resize(outputs.size());
@@ -239,19 +228,6 @@ public:
 
         return res;
     }
-
-    // Used for saving a model file
-    /*virtual void save_outputs (std::ostream &ostr) {
-        for (outputhash_t::const_iterator it = outputs.begin(); it != outputs.end(); ++it) {
-            it->second.save_output(ostr, it->first);
-        }
-    }*/
-
-    // Used for loading a model file
-    /*virtual void add_output (int y, LaFVector wy) {
-        outputs.insert(std::make_pair(y, LaRankOutput(wy)));
-    }*/
-
 
     // Compute Duality gap (costly but used in stopping criteria in batch mode)
     virtual double computeGap ()
@@ -272,7 +248,7 @@ public:
 
             sum_bi += out->getBeta(p.x_id);
             double gi = out->computeGradient(p.x, p.y, p.y);
-            double gmin = DBL_MAX;
+            double gmin = std::numeric_limits<double>::max();
 
             for (outputhash_t::iterator it = outputs.begin(); it != outputs.end(); it++) {
                 if (it->first != p.y && it->second.isSupportVector(p.x_id)) {
@@ -308,7 +284,7 @@ public:
     }
 
 private:
-    typedef std::unordered_map<int, LaRankOutput> outputhash_t; // class index -> LaRankOutput
+    typedef std::map<int, LaRankOutput> outputhash_t; // class index -> LaRankOutput
     outputhash_t outputs;
 
     LaRankOutput *getOutput (int index)
@@ -466,7 +442,7 @@ private:
         }
 
         // Compute lambda and clip it
-        double kii = /*dot(pattern.x,pattern.x);*/ pattern.x.dot(pattern.x);
+        double kii = pattern.x.squaredNorm();
         double lambda = (ygp.gradient - ygm.gradient) / (2 * kii);
         if (ptype == processOptimize || outp->isSupportVector(pattern.x_id)) {
             double beta = outp->getBeta(pattern.x_id);

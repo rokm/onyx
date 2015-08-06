@@ -24,9 +24,10 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <cmath>
+
 #include <unordered_map>
 #include <unordered_set>
-#include <cmath>
 
 #include <Eigen/Core>
 
@@ -77,29 +78,19 @@ public:
 
     void insert (const LaRankPattern &pattern)
     {
-        /*if (!isPattern(pattern.x_id)) {*/
-            if (freeidx.size()) {
-                std::unordered_set<unsigned>::iterator it = freeidx.begin();
-                patterns[*it] = pattern;
-/*                x_id2rank[pattern.x_id] = *it;*/
-                freeidx.erase(it);
-            } else {
-                patterns.push_back(pattern);
-                /*x_id2rank[pattern.x_id] = patterns.size() - 1;*/
-            }
-        /*} else {
-            int rank = getPatternRank(pattern.x_id);
-            patterns[rank]=pattern;
-        }*/
-        std::cout << "Inserted pattern: " << pattern.x_id << ", patterns size: " << patterns.size() << "(actual " << size() << ")" << std::endl;
+        if (freeidx.size()) {
+            std::unordered_set<unsigned>::iterator it = freeidx.begin();
+            patterns[*it] = pattern;
+            freeidx.erase(it);
+        } else {
+            patterns.push_back(pattern);
+        }
     }
 
     void remove (unsigned i)
     {
-        /*x_id2rank[patterns[i].x_id] = 0;*/
         patterns[i].clear();
         freeidx.insert(i);
-        std::cout << "Removed pattern at " << i << ", patterns size: " << patterns.size() << "(actual " << size() << ")" << std::endl;
     }
 
     bool empty () const
@@ -125,22 +116,6 @@ public:
         return patterns[0];
     }
 
-    /*unsigned getPatternRank (int x_id)
-    {
-        return x_id2rank[x_id];
-    }*/
-
-    /*bool isPattern (int x_id)
-    {
-        return x_id2rank[x_id]!=0;
-    }*/
-
-    /*LaRankPattern &getPattern (int x_id)
-    {
-        unsigned rank = x_id2rank[x_id];
-        return patterns[rank];
-    }*/
-
     unsigned maxcount () const
     {
         return patterns.size();
@@ -159,7 +134,6 @@ public:
 private:
     std::unordered_set<unsigned> freeidx;
     std::vector<LaRankPattern> patterns;
-    /*std::unordered_map<int, unsigned> x_id2rank;*/
 };
 
 
@@ -174,21 +148,11 @@ public:
     virtual int predict (const Eigen::VectorXd &x) = 0;
     virtual int predict (const Eigen::VectorXd &x, Eigen::VectorXd &scores) = 0;
 
-    // Functions for saving and loading model
-    /*virtual void save_outputs (std::ostream &ostr) = 0;
-    virtual void add_output (int y, LaFVector wy)    = 0;*/
-
     // Information functions
     virtual void printStuff(double initime, bool dual) = 0;
     virtual double computeGap() = 0;
 
-    unsigned class_count () const
-    {
-        return classes.size();
-    }
-
 public:
-    std::unordered_set<int> classes;
     double C;
     double tau;
 };
