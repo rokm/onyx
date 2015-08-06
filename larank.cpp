@@ -80,10 +80,10 @@ private:
     struct process_return_t
     {
         double dual_increase;
-        int ypred;
+        int predicted_label;
 
-        process_return_t (double dual, int ypred)
-            : dual_increase(dual) , ypred(ypred)
+        process_return_t (double dual, int predicted_label)
+            : dual_increase(dual), predicted_label(predicted_label)
         {
         }
     };
@@ -241,7 +241,7 @@ int LaRank::update (const Eigen::VectorXd &features, int label, double weight)
         num_removed += cleanup();
     }
 
-    return pro_ret.ypred;
+    return pro_ret.predicted_label;
 }
 
 // *********************************************************************
@@ -354,7 +354,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 
     // Determine the prediction and its confidence
     std::sort(scores.begin(), scores.end());
-    pro_ret.ypred = scores[0].label;
+    pro_ret.predicted_label = scores[0].label;
 
     // Find yp
     gradient_t ygp;
@@ -535,7 +535,7 @@ double LaRank::getDualObjective () const
 // *********************************************************************
 Classifier *create_linear_larank ()
 {
-  return new LaRank();
+    return new LaRank();
 }
 
 }; // LinearLaRank
