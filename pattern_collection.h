@@ -32,23 +32,16 @@ class PatternCollection
 {
 public:
     PatternCollection ();
-
     virtual ~PatternCollection ();
-
 
     void insert (const Pattern &pattern);
     void remove (unsigned int i);
 
-    bool empty () const;
+    unsigned int numValidPatterns () const;
+    unsigned int numAllPatterns () const;
 
-    unsigned size () const;
-
-    const Pattern &sample () const;
-
-    unsigned maxcount () const;
-
-    Pattern &operator [] (unsigned int i);
     const Pattern &operator [] (unsigned int i) const;
+    const Pattern &randomSample () const;
 
 private:
     std::unordered_set<unsigned int> freeidx;

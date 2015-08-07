@@ -48,19 +48,25 @@ void PatternCollection::remove (unsigned int i)
 }
 
 
-bool PatternCollection::empty () const
+unsigned int PatternCollection::numAllPatterns () const
 {
-    return patterns.size() == freeidx.size();
+    return patterns.size();
 }
 
-unsigned PatternCollection::size () const
+unsigned int PatternCollection::numValidPatterns () const
 {
     return patterns.size() - freeidx.size();
 }
 
-const Pattern &PatternCollection::sample () const
+
+const Pattern &PatternCollection::operator [] (unsigned int i) const
 {
-    assert(!empty());
+    return patterns[i];
+}
+
+
+const Pattern &PatternCollection::randomSample () const
+{
     while (true) {
         unsigned r = rand() % patterns.size();
         if (patterns[r].isValid()) {
@@ -69,21 +75,6 @@ const Pattern &PatternCollection::sample () const
     }
 
     return patterns[0];
-}
-
-unsigned PatternCollection::maxcount () const
-{
-    return patterns.size();
-}
-
-Pattern &PatternCollection::operator [] (unsigned int i)
-{
-    return patterns[i];
-}
-
-const Pattern &PatternCollection::operator [] (unsigned int i) const
-{
-    return patterns[i];
 }
 
 

@@ -278,7 +278,7 @@ double LaRank::computeDualityGap () const
     double sum_sl = 0.0;
     double sum_bi = 0.0;
 
-    for (unsigned i = 0; i < stored_patterns.maxcount(); i++) {
+    for (unsigned i = 0; i < stored_patterns.numAllPatterns(); i++) {
         const Pattern &pattern = stored_patterns[i];
         if (!pattern.isValid()) {
             continue;
@@ -435,12 +435,14 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 // 2nd optimization function (ProcessOld in the paper)
 double LaRank::reprocess ()
 {
-    if (stored_patterns.size()) {
-        for (int n = 0; n < 10; n++) {
-            process_return_t pro_ret = process(stored_patterns.sample(), processOld);
-            if (pro_ret.dual_increase) {
-                return pro_ret.dual_increase;
-            }
+    if (!stored_patterns.numValidPatterns()) {
+        return 0.0;
+    }
+
+    for (int n = 0; n < 10; n++) {
+        process_return_t pro_ret = process(stored_patterns.randomSample(), processOld);
+        if (pro_ret.dual_increase) {
+            return pro_ret.dual_increase;
         }
     }
 
@@ -450,13 +452,14 @@ double LaRank::reprocess ()
 // 3rd optimization function
 double LaRank::optimize ()
 {
-    double dual_increase = 0.0;
+    if (!stored_patterns.numValidPatterns()) {
+        return 0.0;
+    }
 
-    if (stored_patterns.size()) {
-        for (int n = 0; n < 10; n++) {
-            process_return_t pro_ret = process(stored_patterns.sample(), processOptimize);
-            dual_increase += pro_ret.dual_increase;
-        }
+    double dual_increase = 0.0;
+    for (int n = 0; n < 10; n++) {
+        process_return_t pro_ret = process(stored_patterns.randomSample(), processOptimize);
+        dual_increase += pro_ret.dual_increase;
     }
 
     return dual_increase;
@@ -465,17 +468,17 @@ double LaRank::optimize ()
 // remove patterns and return the number of patterns that were removed
 unsigned int LaRank::cleanup ()
 {
-    unsigned int res = 0;
+    unsigned int count = 0;
 
-    for (unsigned int i = 0; i < stored_patterns.maxcount(); i++) {
-        Pattern &pattern = stored_patterns[i];
+    for (unsigned int i = 0; i < stored_patterns.numAllPatterns(); i++) {
+        const Pattern &pattern = stored_patterns[i];
         if (pattern.isValid() && !decision_functions[pattern.label].isSupportVector(pattern.id)) {
             stored_patterns.remove(i);
-            res++;
+            count++;
         }
     }
 
-    return res;
+    return count;
 }
 
 
@@ -511,7 +514,7 @@ double LaRank::getDualObjective () const
 {
     double res = 0.0;
 
-    for (unsigned int i = 0; i < stored_patterns.maxcount(); i++) {
+    for (unsigned int i = 0; i < stored_patterns.numAllPatterns(); i++) {
         const Pattern &pattern = stored_patterns[i];
 
         if (!pattern.isValid()) {
