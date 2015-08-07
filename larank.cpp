@@ -20,11 +20,11 @@
 
 #include "decision_function.h"
 #include "pattern.h"
-#include "pattern_collection.h"
 
 #include <chrono>
 #include <limits>
 #include <map>
+#include <unordered_set>
 
 
 namespace LinearLaRank {
@@ -89,14 +89,22 @@ private:
     };
 
 private:
+    // Decision function management
     DecisionFunction *getDecisionFunction (int label);
     const DecisionFunction *getDecisionFunction (int label) const;
 
+    // Pattern storage
+    void storePattern (const Pattern &pattern);
+    void removePattern (unsigned int i);
+    const Pattern &getRandomPattern () const;
+
+    // Processing
     process_return_t process (const Pattern &pattern, process_type_t ptype);
     double reprocess ();
     double optimize ();
     unsigned int cleanup ();
 
+    // Statistics
     int getNSV () const;
     double getW2 () const;
     double getDualObjective () const;
@@ -109,9 +117,11 @@ private:
     // Learnt output decision functions
     std::map<int, DecisionFunction> decision_functions;
 
-    // State
-    PatternCollection stored_patterns;
+    // Pattern cache (used for storing support vectors)
+    std::vector<Pattern> stored_patterns;
+    std::unordered_set<unsigned int> free_pattern_idx;
 
+    // Internal state
     uint64_t num_seen_samples = 0;
     uint64_t num_removed = 0;
 
@@ -124,6 +134,9 @@ private:
     double w_opt = 1.0;
 
     double dual = 0.0;
+
+    // Random number generator
+    // TODO
 };
 
 
@@ -278,7 +291,7 @@ double LaRank::computeDualityGap () const
     double sum_sl = 0.0;
     double sum_bi = 0.0;
 
-    for (unsigned i = 0; i < stored_patterns.numAllPatterns(); i++) {
+    for (unsigned i = 0; i < stored_patterns.size(); i++) {
         const Pattern &pattern = stored_patterns[i];
         if (!pattern.isValid()) {
             continue;
@@ -306,6 +319,41 @@ double LaRank::computeDualityGap () const
     }
 
     return std::max(0.0, getW2() + C * sum_sl - sum_bi);
+}
+
+
+// *********************************************************************
+// *                          Pattern storage                          *
+// *********************************************************************
+void LaRank::storePattern (const Pattern &pattern)
+{
+    // If we have a free pattern slot available, re-use it; otherwise,
+    // enlarge the storage by appending the pattern
+    if (free_pattern_idx.size()) {
+        auto it = free_pattern_idx.begin();
+        stored_patterns[*it] = pattern;
+        free_pattern_idx.erase(it);
+    } else {
+        stored_patterns.push_back(pattern);
+    }
+}
+
+void LaRank::removePattern (unsigned int i)
+{
+    stored_patterns[i].clear(); // Mark pattern as invalid
+    free_pattern_idx.insert(i); // Mark the slot as free
+}
+
+const Pattern &LaRank::getRandomPattern () const
+{
+    while (true) {
+        unsigned r = rand() % stored_patterns.size();
+        if (stored_patterns[r].isValid()) {
+            return stored_patterns[r];
+        }
+    }
+
+    return stored_patterns[0];
 }
 
 
@@ -406,7 +454,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
     }
 
     if (ptype == processNew) {
-        stored_patterns.insert(pattern);
+        storePattern(pattern);
     }
 
     // Compute lambda and clip it
@@ -435,12 +483,13 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 // 2nd optimization function (ProcessOld in the paper)
 double LaRank::reprocess ()
 {
-    if (!stored_patterns.numValidPatterns()) {
+    if (stored_patterns.size() == free_pattern_idx.size()) {
+        // No valid patterns available...
         return 0.0;
     }
 
     for (int n = 0; n < 10; n++) {
-        process_return_t pro_ret = process(stored_patterns.randomSample(), processOld);
+        process_return_t pro_ret = process(getRandomPattern(), processOld);
         if (pro_ret.dual_increase) {
             return pro_ret.dual_increase;
         }
@@ -452,13 +501,14 @@ double LaRank::reprocess ()
 // 3rd optimization function
 double LaRank::optimize ()
 {
-    if (!stored_patterns.numValidPatterns()) {
+    if (stored_patterns.size() == free_pattern_idx.size()) {
+        // No valid patterns available...
         return 0.0;
     }
 
     double dual_increase = 0.0;
     for (int n = 0; n < 10; n++) {
-        process_return_t pro_ret = process(stored_patterns.randomSample(), processOptimize);
+        process_return_t pro_ret = process(getRandomPattern(), processOptimize);
         dual_increase += pro_ret.dual_increase;
     }
 
@@ -470,10 +520,10 @@ unsigned int LaRank::cleanup ()
 {
     unsigned int count = 0;
 
-    for (unsigned int i = 0; i < stored_patterns.numAllPatterns(); i++) {
+    for (unsigned int i = 0; i < stored_patterns.size(); i++) {
         const Pattern &pattern = stored_patterns[i];
         if (pattern.isValid() && !decision_functions[pattern.label].isSupportVector(pattern.id)) {
-            stored_patterns.remove(i);
+            removePattern(i);
             count++;
         }
     }
@@ -514,7 +564,7 @@ double LaRank::getDualObjective () const
 {
     double res = 0.0;
 
-    for (unsigned int i = 0; i < stored_patterns.numAllPatterns(); i++) {
+    for (unsigned int i = 0; i < stored_patterns.size(); i++) {
         const Pattern &pattern = stored_patterns[i];
 
         if (!pattern.isValid()) {
