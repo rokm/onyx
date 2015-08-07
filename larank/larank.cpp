@@ -152,10 +152,8 @@ private:
 // *                      Constructor/destructor                       *
 // *********************************************************************
 LaRank::LaRank ()
+    : rng(std::random_device{}())
 {
-    // Seed RNG with random device
-    std::random_device rd;
-    rng.seed(rd());
 }
 
 LaRank::~LaRank ()
