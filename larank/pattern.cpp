@@ -41,7 +41,7 @@ bool Pattern::isValid () const
     return id >= 0;
 }
 
-void Pattern::clear ()
+void Pattern::invalidate ()
 {
     id = -1;
 }

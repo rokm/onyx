@@ -35,7 +35,7 @@ public:
 
     bool isValid () const;
 
-    void clear ();
+    void invalidate ();
 
 public:
     int64_t id; // ID (effectively sample number)

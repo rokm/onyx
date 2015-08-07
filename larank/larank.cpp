@@ -353,7 +353,7 @@ void LaRank::storePattern (const Pattern &pattern)
 
 void LaRank::removePattern (unsigned int i)
 {
-    stored_patterns[i].clear(); // Mark pattern as invalid
+    stored_patterns[i].invalidate(); // Invalidate the pattern
     free_pattern_idx.insert(i); // Mark the slot as free
 }
 
