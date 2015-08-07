@@ -46,8 +46,10 @@ public:
     virtual double getTau () const;
     virtual void setTau (double);
 
-    virtual int update (const Eigen::VectorXd &x, int label, double weight);
-    virtual int predict (const Eigen::VectorXd &x, Eigen::VectorXd &scores) const;
+    virtual int update (const Eigen::VectorXf &features, int label, double weight);
+
+    virtual int predict (const Eigen::VectorXf &features) const;
+    virtual int predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const;
 
     virtual double computeDualityGap () const;
 
@@ -208,7 +210,7 @@ void LaRank::loadFromStream (std::ifstream &stream)
 // *                              Update                               *
 // *********************************************************************
 // Adds new pattern and runs optimization steps chosen with adaptive schedule
-int LaRank::update (const Eigen::VectorXd &features, int label, double weight)
+int LaRank::update (const Eigen::VectorXf &features, int label, double weight)
 {
     // Update counter of seen samples
     num_seen_samples++;
@@ -288,13 +290,28 @@ int LaRank::update (const Eigen::VectorXd &features, int label, double weight)
 // *********************************************************************
 // *                              Predict                              *
 // *********************************************************************
-int LaRank::predict (const Eigen::VectorXd &features, Eigen::VectorXd &scores) const
+int LaRank::predict (const Eigen::VectorXf &features) const
+{
+    int res = -1;
+    double score_max = -std::numeric_limits<double>::max();
+
+    for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
+        double score = it->second.computeScore(features);
+
+        if (score > score_max) {
+            score_max = score;
+            res = it->first;
+        }
+    }
+
+    return res;
+}
+
+int LaRank::predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const
 {
     int res = -1;
     double score_max = -std::numeric_limits<double>::max();
     int nClass = 0;
-
-    scores.resize(decision_functions.size());
 
     for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         double score = it->second.computeScore(features);

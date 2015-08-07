@@ -34,10 +34,10 @@ public:
 
     virtual ~DecisionFunction ();
 
-    double computeGradient (const Eigen::VectorXd &features, int label, int this_label) const;
-    double computeScore (const Eigen::VectorXd &features) const;
+    double computeGradient (const Eigen::VectorXf &features, int label, int this_label) const;
+    double computeScore (const Eigen::VectorXf &features) const;
 
-    void update (const Eigen::VectorXd &features, double lambda, int64_t pattern_id);
+    void update (const Eigen::VectorXf &features, double lambda, int64_t pattern_id);
 
     double getBeta (int64_t pattern_id) const;
     bool isSupportVector (int64_t pattern_id) const;
@@ -50,7 +50,7 @@ private:
     std::unordered_map<int64_t, double> beta;
 
     // Hyperplane weights
-    Eigen::VectorXd w;
+    Eigen::VectorXf w;
 };
 
 

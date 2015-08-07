@@ -200,14 +200,14 @@ int main (int argc, char **argv)
                 int sampleLabel = datasetTrain.labels[idx];
 
                 // Estimate training error
-                int label = classifier->predict<float>(sampleFeature);
+                int label = classifier->predict(sampleFeature);
 
                 if (label != sampleLabel) {
                     trainError[epoch]++;
                 }
 
                 // Update
-                classifier->update<float>(sampleFeature, sampleLabel, 1.0f);
+                classifier->update(sampleFeature, sampleLabel, 1.0f);
 
                 // Print progress
                 if (s && s % sampleRatio == 0) {
@@ -226,7 +226,7 @@ int main (int argc, char **argv)
                     const Eigen::VectorXf &sampleFeature = datasetTest.features[s];
                     int sampleLabel = datasetTest.labels[s];
 
-                    if (classifier->predict<float>(sampleFeature) != sampleLabel) {
+                    if (classifier->predict(sampleFeature) != sampleLabel) {
                         testError[epoch]++;
                     }
                 }
@@ -258,7 +258,7 @@ int main (int argc, char **argv)
             const Eigen::VectorXf &sampleFeature = datasetTest.features[s];
             int sampleLabel = datasetTest.labels[s];
 
-            if (classifier->predict<float>(sampleFeature) != sampleLabel) {
+            if (classifier->predict(sampleFeature) != sampleLabel) {
                 testError++;
             }
         }

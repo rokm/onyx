@@ -35,8 +35,10 @@ public:
     virtual double getTau () const = 0;
     virtual void setTau (double) = 0;
 
-    virtual int update (const Eigen::VectorXd &x, int label, double weight = 1.0) = 0;
-    virtual int predict (const Eigen::VectorXd &x, Eigen::VectorXd &scores) const = 0;
+    virtual int update (const Eigen::VectorXf &features, int label, double weight = 1.0) = 0;
+
+    virtual int predict (const Eigen::VectorXf &features) const = 0;
+    virtual int predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const = 0;
 
     virtual double computeDualityGap () const = 0;
 

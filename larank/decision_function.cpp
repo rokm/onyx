@@ -22,7 +22,7 @@ namespace LinearLaRank {
 
 
 DecisionFunction::DecisionFunction (int numFeatures)
-    : w(Eigen::VectorXd::Zero(numFeatures))
+    : w(Eigen::VectorXf::Zero(numFeatures))
 {
 }
 
@@ -31,17 +31,17 @@ DecisionFunction::~DecisionFunction ()
 }
 
 
-double DecisionFunction::computeGradient (const Eigen::VectorXd &features, int true_label, int predicted_label) const
+double DecisionFunction::computeGradient (const Eigen::VectorXf &features, int true_label, int predicted_label) const
 {
     return (true_label == predicted_label ? 1.0 : 0.0) - computeScore(features);
 }
 
-double DecisionFunction::computeScore (const Eigen::VectorXd &features) const
+double DecisionFunction::computeScore (const Eigen::VectorXf &features) const
 {
     return w.dot(features);
 }
 
-void DecisionFunction::update (const Eigen::VectorXd &features, double lambda, int64_t pattern_id)
+void DecisionFunction::update (const Eigen::VectorXf &features, double lambda, int64_t pattern_id)
 {
     // Update hyperplane weights
     w += lambda * features;
