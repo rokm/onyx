@@ -25,6 +25,7 @@
 #include <limits>
 #include <map>
 #include <unordered_set>
+#include <random>
 
 
 namespace LinearLaRank {
@@ -49,6 +50,8 @@ public:
     virtual int predict (const Eigen::VectorXd &x, Eigen::VectorXd &scores) const;
 
     virtual double computeDualityGap () const;
+
+    virtual void seedRngEngine (unsigned int);
 
 private:
     // Per-class gradient
@@ -96,7 +99,7 @@ private:
     // Pattern storage
     void storePattern (const Pattern &pattern);
     void removePattern (unsigned int i);
-    const Pattern &getRandomPattern () const;
+    const Pattern &getRandomPattern ();
 
     // Processing
     process_return_t process (const Pattern &pattern, process_type_t ptype);
@@ -136,7 +139,7 @@ private:
     double dual = 0.0;
 
     // Random number generator
-    // TODO
+    std::mt19937 rng;
 };
 
 
@@ -145,6 +148,9 @@ private:
 // *********************************************************************
 LaRank::LaRank ()
 {
+    // Seed RNG with random device
+    std::random_device rd;
+    rng.seed(rd());
 }
 
 LaRank::~LaRank ()
@@ -174,6 +180,12 @@ double LaRank::getTau () const
 void LaRank::setTau (double tau)
 {
     this->tau = tau;
+}
+
+
+void LaRank::seedRngEngine (unsigned int seed)
+{
+    rng.seed(seed);
 }
 
 
@@ -219,7 +231,8 @@ int LaRank::update (const Eigen::VectorXd &features, int label, double weight)
 
         w_sum = w_pro + w_rep + w_opt;
 
-        double r = rand() / (double)RAND_MAX * w_sum;
+        std::uniform_real_distribution<double> uniform_dist(0, w_sum);
+        double r = uniform_dist(rng);
 
         if (r <= w_pro) {
             break;
@@ -344,10 +357,11 @@ void LaRank::removePattern (unsigned int i)
     free_pattern_idx.insert(i); // Mark the slot as free
 }
 
-const Pattern &LaRank::getRandomPattern () const
+const Pattern &LaRank::getRandomPattern ()
 {
+    std::uniform_int_distribution<unsigned int> uniform_dist(0, stored_patterns.size() - 1);
     while (true) {
-        unsigned r = rand() % stored_patterns.size();
+        unsigned int r = uniform_dist(rng);
         if (stored_patterns[r].isValid()) {
             return stored_patterns[r];
         }

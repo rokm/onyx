@@ -39,6 +39,8 @@ public:
     virtual int predict (const Eigen::VectorXd &x, Eigen::VectorXd &scores) const = 0;
 
     virtual double computeDualityGap () const = 0;
+
+    virtual void seedRngEngine (unsigned int seed) = 0;
 };
 
 extern Classifier *create_linear_larank ();
