@@ -45,7 +45,7 @@ public:
     int getNSV () const;
     float getW2 () const;
 
-private:
+public:
     // Beta (indicator) values of each support vector
     std::unordered_map<int64_t, float> beta;
 

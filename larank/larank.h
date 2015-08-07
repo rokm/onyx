@@ -44,8 +44,8 @@ public:
 
     virtual void seedRngEngine (unsigned int seed) = 0;
 
-    virtual void saveToStream (std::ofstream &stream) const = 0;
-    virtual void loadFromStream (std::ifstream &stream) = 0;
+    virtual void saveToStream (std::ostream &stream) const = 0;
+    virtual void loadFromStream (std::istream &stream) = 0;
 };
 
 extern Classifier *create_linear_larank ();

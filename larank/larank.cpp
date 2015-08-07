@@ -55,8 +55,8 @@ public:
 
     virtual void seedRngEngine (unsigned int);
 
-    virtual void saveToStream (std::ofstream &stream) const;
-    virtual void loadFromStream (std::ifstream &stream);
+    virtual void saveToStream (std::ostream &stream) const;
+    virtual void loadFromStream (std::istream &stream);
 
 private:
     // Per-class gradient
@@ -130,6 +130,8 @@ private:
     std::unordered_set<unsigned int> free_pattern_idx;
 
     // Internal state
+    uint32_t num_features = 0;
+
     uint64_t num_seen_samples = 0;
     uint64_t num_removed = 0;
 
@@ -195,12 +197,206 @@ void LaRank::seedRngEngine (unsigned int seed)
 // *********************************************************************
 // *                   Serialization/deserialization                   *
 // *********************************************************************
-void LaRank::saveToStream (std::ofstream &stream) const
+template<typename T>
+std::ostream &binary_write (std::ostream &stream, const T &value)
 {
+    return stream.write(reinterpret_cast<const char *>(&value), sizeof(T));
 }
 
-void LaRank::loadFromStream (std::ifstream &stream)
+template<typename T>
+std::istream &binary_read (std::istream &stream, T &value)
 {
+    return stream.read(reinterpret_cast<char *>(&value), sizeof(T));
+}
+
+void LaRank::saveToStream (std::ostream &stream) const
+{
+    // Signature
+    binary_write(stream, 'O');
+    binary_write(stream, 'L');
+    binary_write(stream, 'L');
+    binary_write(stream, 'R');
+
+    // Format version
+    binary_write(stream, static_cast<unsigned int>(1));
+
+    // Parameters
+    binary_write(stream, C);
+    binary_write(stream, tau);
+
+    // Internal state
+    binary_write(stream, num_features);
+    binary_write(stream, num_seen_samples);
+    binary_write(stream, num_removed);
+
+    binary_write(stream, num_pro);
+    binary_write(stream, num_rep);
+    binary_write(stream, num_opt);
+
+    binary_write(stream, w_pro);
+    binary_write(stream, w_rep);
+    binary_write(stream, w_opt);
+
+    binary_write(stream, dual);
+
+    // Pattern cache (support vectors)
+    // NOTE: we store only valid patterns, thereby effectively
+    // pruning the stored_patterns vector and leaving the free_pattern_idx
+    // set empty...
+    unsigned int num_patterns = stored_patterns.size() - free_pattern_idx.size();
+    binary_write(stream, num_patterns);
+
+    for (auto const &pattern : stored_patterns) {
+        // Skip invalid
+        if (!pattern.isValid()) {
+            continue;
+        }
+
+        // Sample ID
+        binary_write(stream, pattern.id);
+
+        // Sample features
+        for (unsigned int f = 0; f < num_features; f++) {
+            binary_write(stream, pattern.features[f]);
+        }
+
+        // Sample label
+        binary_write(stream, pattern.label);
+
+        // Sample weiight
+        binary_write(stream, pattern.weight);
+    }
+
+    // Learnt decision functions
+    binary_write(stream, static_cast<unsigned int>(decision_functions.size()));
+    for (auto const &itd : decision_functions) {
+        int label = itd.first;
+        const DecisionFunction &out = itd.second;
+
+        // Write decision function's label
+        binary_write(stream, label);
+
+        // Beta values
+        binary_write(stream, static_cast<unsigned int>(out.beta.size()));
+        for (auto const &itb : out.beta) {
+            int64_t pattern_id = itb.first;
+            float beta_value = itb.second;
+
+            binary_write(stream, pattern_id);
+            binary_write(stream, beta_value);
+        }
+
+        // Hyperplane weights
+        for (unsigned int f = 0; f < num_features; f++) {
+            binary_write(stream, out.w[f]);
+        }
+    }
+}
+
+void LaRank::loadFromStream (std::istream &stream)
+{
+    // Signature
+    char sig[4];
+    binary_read(stream, sig[0]);
+    binary_read(stream, sig[1]);
+    binary_read(stream, sig[2]);
+    binary_read(stream, sig[3]);
+
+    if (sig[0] != 'O' || sig[1] != 'L' || sig[2] != 'L' || sig[3] != 'R') {
+        throw std::runtime_error("Invalid signature at beginning of the stream!");
+    }
+
+    // Format version
+    unsigned int version;
+    binary_read(stream, version);
+
+    if (version != 1) {
+        throw std::runtime_error("Invalid stream error!");
+    }
+
+    // Clear up the cache
+    decision_functions.clear();
+    stored_patterns.clear();
+    free_pattern_idx.clear();
+
+    // Parameters
+    binary_read(stream, C);
+    binary_read(stream, tau);
+
+    // Internal state
+    binary_read(stream, num_features);
+    binary_read(stream, num_seen_samples);
+    binary_read(stream, num_removed);
+
+    binary_read(stream, num_pro);
+    binary_read(stream, num_rep);
+    binary_read(stream, num_opt);
+
+    binary_read(stream, w_pro);
+    binary_read(stream, w_rep);
+    binary_read(stream, w_opt);
+
+    binary_read(stream, dual);
+
+    // Pattern cache (support vectors)
+    // We stored only valid patterns, so we need to restore only the
+    // stored_patterns vector, and leave free_pattern_idx empty
+    unsigned int num_patterns;
+    binary_read(stream, num_patterns);
+
+    stored_patterns.resize(num_patterns);
+    for (unsigned int p = 0; p < num_patterns; p++) {
+        Pattern &pattern = stored_patterns[p];
+
+        // Sample ID
+        binary_read(stream, pattern.id);
+
+        // Sample features
+        pattern.features.resize(num_features);
+        for (unsigned int f = 0; f < num_features; f++) {
+            binary_read(stream, pattern.features[f]);
+        }
+
+        // Sample label
+        binary_read(stream, pattern.label);
+
+        // Sample weiight
+        binary_read(stream, pattern.weight);
+    }
+
+    // Learnt decision functions
+    unsigned int num_outputs;
+    binary_read(stream, num_outputs);
+
+    for (unsigned int o = 0; o < num_outputs; o++) {
+        int label;
+
+        // Label
+        binary_read(stream, label);
+
+        decision_functions.insert(std::make_pair(label, DecisionFunction(num_features)));
+        DecisionFunction &out = decision_functions[label];
+
+        // Beta values
+        unsigned int num_betas;
+        binary_read(stream, num_betas);
+
+        for (unsigned int b = 0; b < num_betas; b++) {
+            int64_t pattern_id;
+            float beta_value;
+
+            binary_read(stream, pattern_id);
+            binary_read(stream, beta_value);
+
+            out.beta[pattern_id] = beta_value;
+        }
+
+        // Hyperplane weights
+        out.w.resize(num_features);
+        for (unsigned int f = 0; f < num_features; f++) {
+            binary_read(stream, out.w[f]);
+        }
+    }
 }
 
 
@@ -210,13 +406,19 @@ void LaRank::loadFromStream (std::ifstream &stream)
 // Adds new pattern and runs optimization steps chosen with adaptive schedule
 int LaRank::update (const Eigen::VectorXf &features, int label, float weight)
 {
+    // If this is the first sample, deduce the number of features in the
+    // feature vector
+    if (!num_seen_samples) {
+        num_features = features.size();
+    }
+
     // Update counter of seen samples
     num_seen_samples++;
 
     // If we have not seen this class before, create a new decision
     // function
     if (!decision_functions.count(label)) {
-        decision_functions.insert(std::make_pair(label, DecisionFunction(features.size())));
+        decision_functions.insert(std::make_pair(label, DecisionFunction(num_features)));
     }
 
     // Fill pattern element
