@@ -28,7 +28,7 @@ namespace LinearLaRank {
 class Pattern
 {
 public:
-    Pattern (int id, const Eigen::VectorXf &features, int label, double weight = 1.0);
+    Pattern (int id, const Eigen::VectorXf &features, int label, float weight = 1.0);
     Pattern ();
 
     virtual ~Pattern ();
@@ -41,7 +41,7 @@ public:
     int64_t id; // ID (effectively sample number)
     Eigen::VectorXf features; // Feature vector
     int label; // Label
-    double weight; // Weight
+    float weight; // Weight
 };
 
 

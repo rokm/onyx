@@ -29,18 +29,18 @@ class Classifier
 public:
     virtual ~Classifier () {};
 
-    virtual double getC () const = 0;
-    virtual void setC (double C) = 0;
+    virtual float getC () const = 0;
+    virtual void setC (float C) = 0;
 
-    virtual double getTau () const = 0;
-    virtual void setTau (double) = 0;
+    virtual float getTau () const = 0;
+    virtual void setTau (float) = 0;
 
-    virtual int update (const Eigen::VectorXf &features, int label, double weight = 1.0) = 0;
+    virtual int update (const Eigen::VectorXf &features, int label, float weight = 1.0) = 0;
 
     virtual int predict (const Eigen::VectorXf &features) const = 0;
     virtual int predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const = 0;
 
-    virtual double computeDualityGap () const = 0;
+    virtual float computeDualityGap () const = 0;
 
     virtual void seedRngEngine (unsigned int seed) = 0;
 

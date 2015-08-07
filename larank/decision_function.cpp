@@ -31,31 +31,31 @@ DecisionFunction::~DecisionFunction ()
 }
 
 
-double DecisionFunction::computeGradient (const Eigen::VectorXf &features, int true_label, int predicted_label) const
+float DecisionFunction::computeGradient (const Eigen::VectorXf &features, int true_label, int predicted_label) const
 {
     return (true_label == predicted_label ? 1.0 : 0.0) - computeScore(features);
 }
 
-double DecisionFunction::computeScore (const Eigen::VectorXf &features) const
+float DecisionFunction::computeScore (const Eigen::VectorXf &features) const
 {
     return w.dot(features);
 }
 
-void DecisionFunction::update (const Eigen::VectorXf &features, double lambda, int64_t pattern_id)
+void DecisionFunction::update (const Eigen::VectorXf &features, float lambda, int64_t pattern_id)
 {
     // Update hyperplane weights
     w += lambda * features;
 
     // Update indicator value
-    double beta_value = getBeta(pattern_id) + lambda;
-    if (std::fabs(beta_value) < 1e-15)  {
+    float beta_value = getBeta(pattern_id) + lambda;
+    if (std::fabs(beta_value) < 1e-7)  {
         beta.erase(pattern_id); // Clear the value (close enough to 0.0)
     } else {
         beta[pattern_id] = beta_value; // Update
     }
 }
 
-double DecisionFunction::getBeta (int64_t pattern_id) const
+float DecisionFunction::getBeta (int64_t pattern_id) const
 {
     auto it = beta.find(pattern_id);
     return (it == beta.end()) ? 0.0 : it->second;
@@ -71,7 +71,7 @@ int DecisionFunction::getNSV () const
     return beta.size();
 }
 
-double DecisionFunction::getW2 () const
+float DecisionFunction::getW2 () const
 {
     return w.squaredNorm();
 }

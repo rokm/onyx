@@ -40,18 +40,18 @@ public:
     LaRank ();
     virtual ~LaRank ();
 
-    virtual double getC () const;
-    virtual void setC (double C);
+    virtual float getC () const;
+    virtual void setC (float C);
 
-    virtual double getTau () const;
-    virtual void setTau (double);
+    virtual float getTau () const;
+    virtual void setTau (float);
 
-    virtual int update (const Eigen::VectorXf &features, int label, double weight);
+    virtual int update (const Eigen::VectorXf &features, int label, float weight);
 
     virtual int predict (const Eigen::VectorXf &features) const;
     virtual int predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const;
 
-    virtual double computeDualityGap () const;
+    virtual float computeDualityGap () const;
 
     virtual void seedRngEngine (unsigned int);
 
@@ -63,9 +63,9 @@ private:
     struct gradient_t
     {
         int label;
-        double gradient;
+        float gradient;
 
-        gradient_t (int label = 0, double gradient = 0.0)
+        gradient_t (int label = 0, float gradient = 0.0)
             : label(label), gradient(gradient)
         {
         }
@@ -87,10 +87,10 @@ private:
     // Return type for ProcessNew
     struct process_return_t
     {
-        double dual_increase;
+        float dual_increase;
         int predicted_label;
 
-        process_return_t (double dual, int predicted_label)
+        process_return_t (float dual, int predicted_label)
             : dual_increase(dual), predicted_label(predicted_label)
         {
         }
@@ -108,19 +108,19 @@ private:
 
     // Processing
     process_return_t process (const Pattern &pattern, process_type_t ptype);
-    double reprocess ();
-    double optimize ();
+    float reprocess ();
+    float optimize ();
     unsigned int cleanup ();
 
     // Statistics
     int getNSV () const;
-    double getW2 () const;
-    double getDualObjective () const;
+    float getW2 () const;
+    float getDualObjective () const;
 
 private:
     // Parameters
-    double C = 1.0;
-    double tau = 0.0001;
+    float C = 1.0;
+    float tau = 0.0001;
 
     // Learnt output decision functions
     std::map<int, DecisionFunction> decision_functions;
@@ -137,11 +137,11 @@ private:
     uint64_t num_rep = 0;
     uint64_t num_opt = 0;
 
-    double w_pro = 1.0;
-    double w_rep = 1.0;
-    double w_opt = 1.0;
+    float w_pro = 1.0;
+    float w_rep = 1.0;
+    float w_opt = 1.0;
 
-    double dual = 0.0;
+    float dual = 0.0;
 
     // Random number generator
     std::mt19937 rng;
@@ -166,23 +166,23 @@ LaRank::~LaRank ()
 // *********************************************************************
 // *                         Public interface                          *
 // *********************************************************************
-double LaRank::getC () const
+float LaRank::getC () const
 {
     return C;
 }
 
-void LaRank::setC (double C)
+void LaRank::setC (float C)
 {
     this->C = C;
 }
 
 
-double LaRank::getTau () const
+float LaRank::getTau () const
 {
     return tau;
 }
 
-void LaRank::setTau (double tau)
+void LaRank::setTau (float tau)
 {
     this->tau = tau;
 }
@@ -210,7 +210,7 @@ void LaRank::loadFromStream (std::ifstream &stream)
 // *                              Update                               *
 // *********************************************************************
 // Adds new pattern and runs optimization steps chosen with adaptive schedule
-int LaRank::update (const Eigen::VectorXf &features, int label, double weight)
+int LaRank::update (const Eigen::VectorXf &features, int label, float weight)
 {
     // Update counter of seen samples
     num_seen_samples++;
@@ -228,19 +228,19 @@ int LaRank::update (const Eigen::VectorXf &features, int label, double weight)
     auto timeStart = std::chrono::steady_clock::now();
 
     process_return_t pro_ret = process(pattern, processNew);
-    double dual_increase = pro_ret.dual_increase;
+    float dual_increase = pro_ret.dual_increase;
     dual += dual_increase;
 
-    double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart).count();
-    double coeff = dual_increase / (10*(0.00001 + duration));
+    float duration = std::chrono::duration<float>(std::chrono::steady_clock::now() - timeStart).count();
+    float coeff = dual_increase / (10*(0.00001 + duration));
     num_pro++;
     w_pro = 0.05 * coeff + (1.0 - 0.05) * w_pro;
 
     // *** ProcessOld & Optimize until ready for a new ProcessNew ***
     // (Adaptive schedule here)
     for (;;) {
-        double w_sum = w_pro + w_rep + w_opt;
-        double prop_min = w_sum / 20;
+        float w_sum = w_pro + w_rep + w_opt;
+        float prop_min = w_sum / 20;
 
         w_pro = std::max(w_pro, prop_min);
         w_rep = std::max(w_rep, prop_min);
@@ -248,32 +248,32 @@ int LaRank::update (const Eigen::VectorXf &features, int label, double weight)
 
         w_sum = w_pro + w_rep + w_opt;
 
-        std::uniform_real_distribution<double> uniform_dist(0, w_sum);
-        double r = uniform_dist(rng);
+        std::uniform_real_distribution<float> uniform_dist(0, w_sum);
+        float r = uniform_dist(rng);
 
         if (r <= w_pro) {
             break;
         } else if ((r > w_pro) && (r <= w_pro + w_rep)) {
             auto timeStart = std::chrono::steady_clock::now();
 
-            double dual_increase = reprocess();
+            float dual_increase = reprocess();
 
             dual += dual_increase;
 
-            double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart).count();
-            double coeff = dual_increase / (0.00001 + duration);
+            float duration = std::chrono::duration<float>(std::chrono::steady_clock::now() - timeStart).count();
+            float coeff = dual_increase / (0.00001 + duration);
 
             num_rep++;
             w_rep = 0.05 * coeff + (1 - 0.05) * w_rep;
         } else {
             auto timeStart = std::chrono::steady_clock::now();
 
-            double dual_increase = optimize();
+            float dual_increase = optimize();
 
             dual += dual_increase;
 
-            double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart).count();
-            double coeff = dual_increase / (0.00001 + duration);
+            float duration = std::chrono::duration<float>(std::chrono::steady_clock::now() - timeStart).count();
+            float coeff = dual_increase / (0.00001 + duration);
 
             num_opt++;
             w_opt = 0.05 * coeff + (1 - 0.05) * w_opt;
@@ -293,10 +293,10 @@ int LaRank::update (const Eigen::VectorXf &features, int label, double weight)
 int LaRank::predict (const Eigen::VectorXf &features) const
 {
     int res = -1;
-    double score_max = -std::numeric_limits<double>::max();
+    float score_max = -std::numeric_limits<float>::max();
 
     for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
-        double score = it->second.computeScore(features);
+        float score = it->second.computeScore(features);
 
         if (score > score_max) {
             score_max = score;
@@ -310,11 +310,11 @@ int LaRank::predict (const Eigen::VectorXf &features) const
 int LaRank::predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const
 {
     int res = -1;
-    double score_max = -std::numeric_limits<double>::max();
+    float score_max = -std::numeric_limits<float>::max();
     int nClass = 0;
 
     for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
-        double score = it->second.computeScore(features);
+        float score = it->second.computeScore(features);
 
         if (score > score_max) {
             score_max = score;
@@ -331,10 +331,10 @@ int LaRank::predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) c
 // *********************************************************************
 // *                        Compute duality gap                        *
 // *********************************************************************
-double LaRank::computeDualityGap () const
+float LaRank::computeDualityGap () const
 {
-    double sum_sl = 0.0;
-    double sum_bi = 0.0;
+    float sum_sl = 0.0;
+    float sum_bi = 0.0;
 
     for (unsigned i = 0; i < stored_patterns.size(); i++) {
         const Pattern &pattern = stored_patterns[i];
@@ -348,22 +348,22 @@ double LaRank::computeDualityGap () const
         }
 
         sum_bi += out->getBeta(pattern.id);
-        double gi = out->computeGradient(pattern.features, pattern.label, pattern.label);
-        double gmin = std::numeric_limits<double>::max();
+        float gi = out->computeGradient(pattern.features, pattern.label, pattern.label);
+        float gmin = std::numeric_limits<float>::max();
 
         for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
             if (it->first != pattern.label && it->second.isSupportVector(pattern.id)) {
-                double g = it->second.computeGradient(pattern.features, pattern.label, it->first);
+                float g = it->second.computeGradient(pattern.features, pattern.label, it->first);
                 if (g < gmin) {
                     gmin = g;
                 }
             }
         }
 
-        sum_sl += std::max(0.0, gi-gmin);
+        sum_sl += std::max(0.0f, gi-gmin);
     }
 
-    return std::max(0.0, getW2() + C * sum_sl - sum_bi);
+    return std::max(0.0f, getW2() + C * sum_sl - sum_bi);
 }
 
 
@@ -432,7 +432,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
     // Compute gradient and sort
     for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         if (ptype != processOptimize || it->second.isSupportVector(pattern.id)) {
-            double g = it->second.computeGradient(pattern.features, pattern.label, it->first);
+            float g = it->second.computeGradient(pattern.features, pattern.label, it->first);
 
             gradients.push_back(gradient_t(it->first, g));
 
@@ -504,15 +504,15 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
     }
 
     // Compute lambda and clip it
-    double kii = pattern.features.squaredNorm();
-    double lambda = (ygp.gradient - ygm.gradient) / (2 * kii);
+    float kii = pattern.features.squaredNorm();
+    float lambda = (ygp.gradient - ygm.gradient) / (2 * kii);
     if (ptype == processOptimize || outp->isSupportVector(pattern.id)) {
-        double beta = outp->getBeta(pattern.id);
+        float beta = outp->getBeta(pattern.id);
 
         if (ygp.label == pattern.label) {
             lambda = std::min(lambda, C * pattern.weight - beta);
         } else {
-            lambda = std::min(lambda, fabs(beta));
+            lambda = std::min(lambda, std::fabs(beta));
         }
     } else {
         lambda = std::min(lambda, C * pattern.weight);
@@ -527,7 +527,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 }
 
 // 2nd optimization function (ProcessOld in the paper)
-double LaRank::reprocess ()
+float LaRank::reprocess ()
 {
     if (stored_patterns.size() == free_pattern_idx.size()) {
         // No valid patterns available...
@@ -545,14 +545,14 @@ double LaRank::reprocess ()
 }
 
 // 3rd optimization function
-double LaRank::optimize ()
+float LaRank::optimize ()
 {
     if (stored_patterns.size() == free_pattern_idx.size()) {
         // No valid patterns available...
         return 0.0;
     }
 
-    double dual_increase = 0.0;
+    float dual_increase = 0.0;
     for (int n = 0; n < 10; n++) {
         process_return_t pro_ret = process(getRandomPattern(), processOptimize);
         dual_increase += pro_ret.dual_increase;
@@ -594,9 +594,9 @@ int LaRank::getNSV () const
 }
 
 // Square-norm of the weight vector w
-double LaRank::getW2 () const
+float LaRank::getW2 () const
 {
-    double res = 0.0;
+    float res = 0.0;
 
     for (auto it = decision_functions.begin(); it != decision_functions.end(); it++) {
         res += it->second.getW2();
@@ -606,9 +606,9 @@ double LaRank::getW2 () const
 }
 
 // Dual objective value
-double LaRank::getDualObjective () const
+float LaRank::getDualObjective () const
 {
-    double res = 0.0;
+    float res = 0.0;
 
     for (unsigned int i = 0; i < stored_patterns.size(); i++) {
         const Pattern &pattern = stored_patterns[i];

@@ -21,7 +21,7 @@
 namespace LinearLaRank {
 
 
-Pattern::Pattern (int id, const Eigen::VectorXf &features, int label, double weight)
+Pattern::Pattern (int id, const Eigen::VectorXf &features, int label, float weight)
     : id(id), features(features), label(label), weight(weight)
 {
 }
