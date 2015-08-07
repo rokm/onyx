@@ -1,5 +1,4 @@
-/* Linear LaRank: Pattern
- * Copyright (C) 2008- Antoine Bordes
+/* Demo application: Dataset
  * Copyright (C) 2015 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
@@ -16,36 +15,41 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__LARANK__PATTERN_H
-#define LINEAR_LARANK__LARANK__PATTERN_H
+#ifndef LINEAR_LARANK__APPS__DATASET_H
+#define LINEAR_LARANK__APPS__DATASET_H
+
+#include <vector>
+#include <set>
 
 #include <Eigen/Core>
 
 
-namespace LinearLaRank {
+namespace Example {
 
 
-class Pattern
+class Dataset
 {
 public:
-    Pattern (int id, const Eigen::VectorXd &features, int label, double weight = 1.0);
-    Pattern ();
+    void load (const std::string &featuresFilename, const std::string &labelsFilename);
 
-    virtual ~Pattern ();
-
-    bool isValid () const;
-
-    void invalidate ();
+protected:
+    void findFeatureRange ();
 
 public:
-    int64_t id; // ID (effectively sample number)
-    Eigen::VectorXd features; // Feature vector
-    int label; // Label
-    double weight; // Weight
+    std::vector<Eigen::VectorXf> features;
+    std::vector<int> labels;
+    std::set<int> classes;
+
+    unsigned int numSamples;
+    unsigned int numFeatures;
+    unsigned int numClasses;
+
+    Eigen::VectorXf minFeatureRange;
+    Eigen::VectorXf maxFeatureRange;
 };
 
 
-}; // LinearLaRank
+}; // Example
 
 
 #endif

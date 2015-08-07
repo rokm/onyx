@@ -16,8 +16,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__DECISION_FUNCTION_H
-#define LINEAR_LARANK__DECISION_FUNCTION_H
+#ifndef LINEAR_LARANK__LARANK__DECISION_FUNCTION_H
+#define LINEAR_LARANK__LARANK__DECISION_FUNCTION_H
 
 #include <Eigen/Core>
 

@@ -53,6 +53,9 @@ public:
 
     virtual void seedRngEngine (unsigned int);
 
+    virtual void saveToStream (std::ofstream &stream) const;
+    virtual void loadFromStream (std::ifstream &stream);
+
 private:
     // Per-class gradient
     struct gradient_t
@@ -186,6 +189,18 @@ void LaRank::setTau (double tau)
 void LaRank::seedRngEngine (unsigned int seed)
 {
     rng.seed(seed);
+}
+
+
+// *********************************************************************
+// *                   Serialization/deserialization                   *
+// *********************************************************************
+void LaRank::saveToStream (std::ofstream &stream) const
+{
+}
+
+void LaRank::loadFromStream (std::ifstream &stream)
+{
 }
 
 

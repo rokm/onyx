@@ -16,8 +16,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__LARANK_H
-#define LINEAR_LARANK__LARANK_H
+#ifndef LINEAR_LARANK__LARANK__LARANK_H
+#define LINEAR_LARANK__LARANK__LARANK_H
 
 #include <Eigen/Core>
 
@@ -41,6 +41,9 @@ public:
     virtual double computeDualityGap () const = 0;
 
     virtual void seedRngEngine (unsigned int seed) = 0;
+
+    virtual void saveToStream (std::ofstream &stream) const = 0;
+    virtual void loadFromStream (std::ifstream &stream) = 0;
 };
 
 extern Classifier *create_linear_larank ();
