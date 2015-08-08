@@ -47,6 +47,8 @@ public:
     virtual float getTau () const;
     virtual void setTau (float);
 
+    virtual unsigned int getNumClasses () const;
+
     virtual int update (const Eigen::VectorXf &features, int label, float weight);
 
     virtual int predict (const Eigen::VectorXf &features) const;
@@ -186,6 +188,12 @@ float LaRank::getTau () const
 void LaRank::setTau (float tau)
 {
     this->tau = tau;
+}
+
+
+unsigned int LaRank::getNumClasses () const
+{
+    return decision_functions.size();
 }
 
 

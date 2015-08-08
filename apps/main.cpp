@@ -24,7 +24,7 @@
 
 #include <boost/program_options.hpp>
 
-#include <larank/larank.h>
+#include <onyx/larank/larank.h>
 #include "dataset.h"
 
 
@@ -53,11 +53,11 @@ int main (int argc, char **argv)
     double tau = 0.0001;
 
     // *** Print banner ***
-    std::cout << "Online Linear LaRank, (C) Rok Mandeljc <rok.mandeljc@fe.uni-lj.si>" << std::endl;
+    std::cout << "Onyx v.1.0, (C) 2015 Rok Mandeljc <rok.mandeljc@gmail.com>" << std::endl;
     std::cout << std::endl;
 
     // *** Command-line parser ***
-    boost::program_options::options_description commandLineArguments("Online Linear LaRank classifier");
+    boost::program_options::options_description commandLineArguments("Onyx - Online Classifier Application");
     boost::program_options::variables_map optionsMap;
     boost::program_options::positional_options_description positionalArguments;
 

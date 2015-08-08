@@ -37,6 +37,8 @@ public:
     virtual float getTau () const = 0;
     virtual void setTau (float) = 0;
 
+    virtual unsigned int getNumClasses () const = 0;
+
     virtual int update (const Eigen::VectorXf &features, int label, float weight = 1.0) = 0;
 
     virtual int predict (const Eigen::VectorXf &features) const = 0;

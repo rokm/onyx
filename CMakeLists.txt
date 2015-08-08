@@ -22,10 +22,10 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Library
-add_subdirectory(larank)
+add_subdirectory(onyx)
 
 # Applications
 add_subdirectory(apps)
 
 # MATLAB
-#add_subdirectory(matlab)
+add_subdirectory(matlab)
