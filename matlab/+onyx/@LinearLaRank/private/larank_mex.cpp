@@ -116,9 +116,9 @@ void __classifier_predict (std::unique_ptr<Onyx::LinearLaRank::Classifier> &clas
 
         // Predict
         if (scoresPtr) {
-            predictedLabel = classifier->predict<FeatureType>(features, Eigen::Ref<Eigen::VectorXf>(Eigen::Map<Eigen::VectorXf>(scoresPtr + i*numClasses, numClasses)));
+            predictedLabel = classifier->predict(features, Eigen::Ref<Eigen::VectorXf>(Eigen::Map<Eigen::VectorXf>(scoresPtr + i*numClasses, numClasses)));
         } else {
-            predictedLabel = classifier->predict<FeatureType>(features);
+            predictedLabel = classifier->predict(features);
         }
 
         // Copy label
@@ -173,11 +173,11 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
 
     if (mxIsDouble(prhs[1])) {
         // Double-precision features
-        __classifier_predict<double>(classifier,
+        /*__classifier_predict<double>(classifier,
             static_cast<const double *>(mxGetData(prhs[1])),
             numClasses, numSamples, numFeatures,
             labelsPtr,
-            scoresPtr);
+            scoresPtr);*/
     } else {
         // Single-precision features
         __classifier_predict<float>(classifier,
@@ -197,7 +197,7 @@ void __classifier_update (std::unique_ptr<Onyx::LinearLaRank::Classifier> &class
 {
     for (unsigned int i = 0; i < numSamples; i++) {
         Eigen::Map< const Eigen::Matrix<FeatureType, Eigen::Dynamic, 1> > features(featuresPtr + i*numFeatures, numFeatures);
-        classifier->update<FeatureType>(features, labelsPtr[i], weightsPtr ? weightsPtr[i] : 1.0);
+        classifier->update(features, labelsPtr[i], weightsPtr ? weightsPtr[i] : 1.0);
     }
 }
 
@@ -255,12 +255,12 @@ void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs
     // Process all samples
     if (mxIsDouble(prhs[1])) {
         // Double-precision features
-        __classifier_update<double>(classifier,
+        /*__classifier_update<double>(classifier,
             static_cast<const double *>(mxGetData(prhs[1])),
             labelsPtr,
             weightsPtr,
             numSamples,
-            numFeatures);
+            numFeatures);*/
     } else {
         // Single-precision features
         __classifier_update<float>(classifier,

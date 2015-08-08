@@ -42,7 +42,7 @@ public:
     virtual int update (const Eigen::VectorXf &features, int label, float weight = 1.0) = 0;
 
     virtual int predict (const Eigen::VectorXf &features) const = 0;
-    virtual int predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const = 0;
+    virtual int predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf> scores) const = 0;
 
     virtual float computeDualityGap () const = 0;
 

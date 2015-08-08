@@ -52,7 +52,7 @@ public:
     virtual int update (const Eigen::VectorXf &features, int label, float weight);
 
     virtual int predict (const Eigen::VectorXf &features) const;
-    virtual int predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const;
+    virtual int predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf> scores) const;
 
     virtual float computeDualityGap () const;
 
@@ -516,7 +516,7 @@ int LaRank::predict (const Eigen::VectorXf &features) const
     return res;
 }
 
-int LaRank::predict (const Eigen::VectorXf &features, Eigen::VectorXf &scores) const
+int LaRank::predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf> scores) const
 {
     int res = -1;
     float score_max = -std::numeric_limits<float>::max();
