@@ -173,11 +173,11 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
 
     if (mxIsDouble(prhs[1])) {
         // Double-precision features
-        /*__classifier_predict<double>(classifier,
+        __classifier_predict<double>(classifier,
             static_cast<const double *>(mxGetData(prhs[1])),
             numClasses, numSamples, numFeatures,
             labelsPtr,
-            scoresPtr);*/
+            scoresPtr);
     } else {
         // Single-precision features
         __classifier_predict<float>(classifier,
@@ -255,12 +255,12 @@ void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs
     // Process all samples
     if (mxIsDouble(prhs[1])) {
         // Double-precision features
-        /*__classifier_update<double>(classifier,
+        __classifier_update<double>(classifier,
             static_cast<const double *>(mxGetData(prhs[1])),
             labelsPtr,
             weightsPtr,
             numSamples,
-            numFeatures);*/
+            numFeatures);
     } else {
         // Single-precision features
         __classifier_update<float>(classifier,

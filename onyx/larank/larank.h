@@ -40,10 +40,14 @@ public:
 
     virtual unsigned int getNumClasses () const = 0;
 
-    virtual int update (const Eigen::VectorXf &features, int label, float weight = 1.0) = 0;
+    virtual int update (const Eigen::Ref<const Eigen::VectorXf> &features, int label, float weight = 1.0) = 0;
+    virtual int update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight = 1.0) = 0;
 
-    virtual int predict (const Eigen::VectorXf &features) const = 0;
-    virtual int predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf> scores) const = 0;
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXf> &features) const = 0;
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXd> &features) const = 0;
+
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXf> &features, Eigen::Ref<Eigen::VectorXf> scores) const = 0;
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXd> &features, Eigen::Ref<Eigen::VectorXf> scores) const = 0;
 
     virtual float computeDualityGap () const = 0;
 

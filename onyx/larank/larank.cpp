@@ -49,10 +49,14 @@ public:
 
     virtual unsigned int getNumClasses () const;
 
-    virtual int update (const Eigen::VectorXf &features, int label, float weight);
+    virtual int update (const Eigen::Ref<const Eigen::VectorXf> &features, int label, float weight);
+    virtual int update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight);
 
-    virtual int predict (const Eigen::VectorXf &features) const;
-    virtual int predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf> scores) const;
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXf> &features) const;
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXd> &features) const;
+
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXf> &features, Eigen::Ref<Eigen::VectorXf> scores) const;
+    virtual int predict (const Eigen::Ref<const Eigen::VectorXd> &features, Eigen::Ref<Eigen::VectorXf> scores) const;
 
     virtual float computeDualityGap () const;
 
@@ -413,7 +417,7 @@ void LaRank::loadFromStream (std::istream &stream)
 // *                              Update                               *
 // *********************************************************************
 // Adds new pattern and runs optimization steps chosen with adaptive schedule
-int LaRank::update (const Eigen::VectorXf &features, int label, float weight)
+int LaRank::update (const Eigen::Ref<const Eigen::VectorXf> &features, int label, float weight)
 {
     // If this is the first sample, deduce the number of features in the
     // feature vector
@@ -496,10 +500,17 @@ int LaRank::update (const Eigen::VectorXf &features, int label, float weight)
     return pro_ret.predicted_label;
 }
 
+int LaRank::update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight)
+{
+    Eigen::VectorXf convertedFeatures = features.cast<float>();
+    return update(convertedFeatures, label, weight);
+}
+
+
 // *********************************************************************
 // *                              Predict                              *
 // *********************************************************************
-int LaRank::predict (const Eigen::VectorXf &features) const
+int LaRank::predict (const Eigen::Ref<const Eigen::VectorXf> &features) const
 {
     int res = -1;
     float score_max = -std::numeric_limits<float>::max();
@@ -516,7 +527,14 @@ int LaRank::predict (const Eigen::VectorXf &features) const
     return res;
 }
 
-int LaRank::predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf> scores) const
+int LaRank::predict (const Eigen::Ref<const Eigen::VectorXd> &features) const
+{
+    Eigen::VectorXf convertedFeatures = features.cast<float>();
+    return predict(convertedFeatures);
+}
+
+
+int LaRank::predict (const Eigen::Ref<const Eigen::VectorXf> &features, Eigen::Ref<Eigen::VectorXf> scores) const
 {
     int res = -1;
     float score_max = -std::numeric_limits<float>::max();
@@ -534,6 +552,12 @@ int LaRank::predict (const Eigen::VectorXf &features, Eigen::Ref<Eigen::VectorXf
     }
 
     return res;
+}
+
+int LaRank::predict (const Eigen::Ref<const Eigen::VectorXd> &features, Eigen::Ref<Eigen::VectorXf> scores) const
+{
+    Eigen::VectorXf convertedFeatures = features.cast<float>();
+    return predict(convertedFeatures, scores);
 }
 
 
