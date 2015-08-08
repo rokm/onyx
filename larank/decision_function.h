@@ -1,4 +1,4 @@
-/* Linear LaRank: Decision function
+/* Onyx: Linear LaRank: Decision function
  * Copyright (C) 2008- Antoine Bordes
  * Copyright (C) 2015 Rok Mandeljc
  *
@@ -16,14 +16,15 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__LARANK__DECISION_FUNCTION_H
-#define LINEAR_LARANK__LARANK__DECISION_FUNCTION_H
+#ifndef ONYX__LARANK__DECISION_FUNCTION_H
+#define ONYX__LARANK__DECISION_FUNCTION_H
 
 #include <Eigen/Core>
 
 #include <unordered_map>
 
 
+namespace Onyx {
 namespace LinearLaRank {
 
 
@@ -54,7 +55,8 @@ public:
 };
 
 
-}; // LinearLaRank
+} // LinearLaRank
+} // Onyx
 
 
 #endif

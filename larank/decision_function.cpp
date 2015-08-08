@@ -1,4 +1,4 @@
-/* Linear LaRank: Decision function
+/* Onyx: Linear LaRank: Decision function
  * Copyright (C) 2008- Antoine Bordes
  * Copyright (C) 2015 Rok Mandeljc
  *
@@ -18,6 +18,7 @@
 
 #include "decision_function.h"
 
+namespace Onyx {
 namespace LinearLaRank {
 
 
@@ -77,4 +78,5 @@ float DecisionFunction::getW2 () const
 }
 
 
-}; // LinearLaRank
+} // LinearLaRank
+} // Onyx

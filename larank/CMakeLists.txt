@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(liblarank C CXX)
+project(larank C CXX)
 
 include(GenerateExportHeader)
 

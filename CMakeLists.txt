@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(larank CXX)
+project(onyx CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

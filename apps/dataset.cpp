@@ -1,4 +1,4 @@
-/* Demo application: Dataset
+/* Onyx: Demo application: Dataset
  * Copyright (C) 2015 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <fstream>
 
 
+namespace Onyx {
 namespace Example {
 
 
@@ -102,4 +103,5 @@ void Dataset::load (const std::string &featuresFilename, const std::string &labe
 }
 
 
-}; // Example
+} // Example
+} // Onyx

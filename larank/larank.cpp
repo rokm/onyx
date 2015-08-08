@@ -1,4 +1,4 @@
-/* Linear LaRank: Linear LaRank classifier
+/* Onyx: Linear LaRank: Linear LaRank classifier
  * Copyright (C) 2008- Antoine Bordes
  * Copyright (C) 2015 Rok Mandeljc
  *
@@ -28,6 +28,7 @@
 #include <random>
 
 
+namespace Onyx {
 namespace LinearLaRank {
 
 
@@ -837,4 +838,6 @@ Classifier *create_linear_larank ()
     return new LaRank();
 }
 
-}; // LinearLaRank
+
+} // LinearLaRank
+} // Onyx

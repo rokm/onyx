@@ -1,4 +1,4 @@
-/* Demo application
+/* Onyx: Demo application
  * Copyright (C) 2015 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
@@ -30,10 +30,10 @@
 
 int main (int argc, char **argv)
 {
-    LinearLaRank::Classifier *classifier;
+    Onyx::LinearLaRank::Classifier *classifier;
 
-    Example::Dataset datasetTrain;
-    Example::Dataset datasetTest;
+    Onyx::Example::Dataset datasetTrain;
+    Onyx::Example::Dataset datasetTest;
 
     std::chrono::time_point<std::chrono::system_clock> start, end; // Timings
 
@@ -156,7 +156,7 @@ int main (int argc, char **argv)
     }
 
     // *** Classifier ***
-    classifier = LinearLaRank::create_linear_larank();
+    classifier = Onyx::LinearLaRank::create_linear_larank();
     if (!loadClassifier.empty()) {
         // Load from file
         std::cout << "Loading classifier from file: " << loadClassifier << std::endl;

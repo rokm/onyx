@@ -1,4 +1,4 @@
-/* Linear LaRank: Pattern
+/* Onyx: Linear LaRank: Pattern
  * Copyright (C) 2008- Antoine Bordes
  * Copyright (C) 2015 Rok Mandeljc
  *
@@ -18,6 +18,8 @@
 
 #include "pattern.h"
 
+
+namespace Onyx {
 namespace LinearLaRank {
 
 
@@ -47,4 +49,5 @@ void Pattern::invalidate ()
 }
 
 
-}; // LinearLaRank
+} // LinearLaRank
+} // Onyx

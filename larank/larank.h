@@ -1,4 +1,4 @@
-/* Linear LaRank: Linear LaRank classifier
+/* Onyx: Linear LaRank: Linear LaRank classifier
  * Copyright (C) 2008- Antoine Bordes
  * Copyright (C) 2015 Rok Mandeljc
  *
@@ -16,13 +16,15 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__LARANK__LARANK_H
-#define LINEAR_LARANK__LARANK__LARANK_H
+#ifndef ONYX__LARANK__LARANK_H
+#define ONYX__LARANK__LARANK_H
 
 #include <Eigen/Core>
 
 
+namespace Onyx {
 namespace LinearLaRank {
+
 
 class Classifier
 {
@@ -50,6 +52,8 @@ public:
 
 extern Classifier *create_linear_larank ();
 
-}; // LinearLaRank
+
+} // LinearLaRank
+} // Onyx
 
 #endif

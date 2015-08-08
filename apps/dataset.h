@@ -1,4 +1,4 @@
-/* Demo application: Dataset
+/* Onyx: Demo application: Dataset
  * Copyright (C) 2015 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
@@ -15,8 +15,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINEAR_LARANK__APPS__DATASET_H
-#define LINEAR_LARANK__APPS__DATASET_H
+#ifndef ONYX__APPS__DATASET_H
+#define ONYX__APPS__DATASET_H
 
 #include <vector>
 #include <set>
@@ -24,6 +24,7 @@
 #include <Eigen/Core>
 
 
+namespace Onyx {
 namespace Example {
 
 
@@ -49,7 +50,8 @@ public:
 };
 
 
-}; // Example
+} // Example
+} // Onyx
 
 
 #endif
