@@ -66,7 +66,7 @@ static void classifier_create (int nlhs, mxArray **plhs, int nrhs, const mxArray
     }
 
     // *** Create LinearLaRank object ***
-    objects[counter] = std::unique_ptr<Onyx::LinearLaRank::Classifier>( Onyx::LinearLaRank::create_linear_larank() );
+    objects[counter] = std::unique_ptr<Onyx::LinearLaRank::Classifier>( Onyx::LinearLaRank::create_classifier() );
 
     // Return the ID
     plhs[0] = mxCreateDoubleScalar(counter);

@@ -20,6 +20,7 @@
 #define ONYX__LARANK__LARANK_H
 
 #include <Eigen/Core>
+#include <onyx/export.h>
 
 
 namespace Onyx {
@@ -52,7 +53,7 @@ public:
     virtual void loadFromStream (std::istream &stream) = 0;
 };
 
-extern Classifier *create_linear_larank ();
+extern ONYX_EXPORT Classifier *create_classifier ();
 
 
 } // LinearLaRank

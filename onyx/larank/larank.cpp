@@ -841,7 +841,7 @@ float LaRank::getDualObjective () const
 // *********************************************************************
 // *                     Exported create function                      *
 // *********************************************************************
-Classifier *create_linear_larank ()
+Classifier *create_classifier ()
 {
     return new LaRank();
 }

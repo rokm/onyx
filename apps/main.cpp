@@ -156,7 +156,7 @@ int main (int argc, char **argv)
     }
 
     // *** Classifier ***
-    classifier = Onyx::LinearLaRank::create_linear_larank();
+    classifier = Onyx::LinearLaRank::create_classifier();
     if (!loadClassifier.empty()) {
         // Load from file
         std::cout << "Loading classifier from file: " << loadClassifier << std::endl;
