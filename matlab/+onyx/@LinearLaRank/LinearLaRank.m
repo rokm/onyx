@@ -1,7 +1,8 @@
 classdef LinearLaRank < handle
     % LINEARLARANK Linear LaRank classifier
     %
-    % This class wraps a MEX imlementation of Linear LaRank
+    % This class wraps the C++ imlementation of Linear LaRank from onyx
+    % library.
     %
     % (C) 2015 Rok Mandeljc <rok.mandeljc@gmail.com>
 
@@ -70,8 +71,8 @@ classdef LinearLaRank < handle
             end
         end
 
-        function [ labels, scores ] = predict (self, features)
-            % [ labels, scores ] = PREDICT (self, features)
+        function [ labels, scores, probabilities ] = predict (self, features)
+            % [ labels, scores, probabilities ] = PREDICT (self, features)
             %
             % Performs classification of the provided feature vectors.
             %
@@ -86,9 +87,15 @@ classdef LinearLaRank < handle
             %  - scores: CxN matrix of prediction scores, where each column
             %    corresponds to a scores vector for a sample and C is
             %    number of classes
+            %  - probabilities: CxN matrix of prediction scores, converted
+            %    to probabilities via exponential function
 
             if nargout > 1,
                 [ labels, scores ] = linear_larank_mex(self.CommandPredict, self.handle, features);
+                if nargout > 2,
+                    probabilities = exp(scores);
+                    probabilities = bsxfun(@rdivide, probabilities, sum(probabilities)); % Normalize
+                end
             else
                 labels = linear_larank_mex(self.CommandPredict, self.handle, features);
             end
@@ -284,7 +291,7 @@ classdef LinearLaRank < handle
             if isstruct(s),
                 % Construct LinearLaRank and deserial
                 self = onyx.LinearLaRank();
-                linear_larank_mex(self.CommandDeserialize, self.handle, self.SerializedData);
+                linear_larank_mex(self.CommandDeserialize, self.handle, s.SerializedData);
             else
                 self = s;
             end

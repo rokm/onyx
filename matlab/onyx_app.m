@@ -23,12 +23,12 @@ function onyx_app (dataset_prefix, varargin)
 
     %% Parse arguments
     parser = inputParser();
-    parser.addParamValue('load_classifier', '', @ischar);
-    parser.addParamValue('save_classifier', '', @ischar);
-    parser.addParamValue('enable_training', true, @islogical);
-    parser.addParamValue('enable_testing', true, @islogical);
-    parser.addParamValue('num_epochs', 10, @isnumeric);
-    parser.addParamValue('classifier_parameters', {}, @iscell);
+    parser.addParameter('load_classifier', '', @ischar);
+    parser.addParameter('save_classifier', '', @ischar);
+    parser.addParameter('enable_training', true, @islogical);
+    parser.addParameter('enable_testing', true, @islogical);
+    parser.addParameter('num_epochs', 10, @isnumeric);
+    parser.addParameter('classifier_parameters', {}, @iscell);
     parser.parse(varargin{:});
 
     %% Initialize variables
