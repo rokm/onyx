@@ -16,8 +16,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONYX__LARANK__LARANK_H
-#define ONYX__LARANK__LARANK_H
+#ifndef ONYX__LINEAR_LARANK__LARANK_H
+#define ONYX__LINEAR_LARANK__LARANK_H
 
 #include <Eigen/Core>
 #include <onyx/export.h>
@@ -38,7 +38,12 @@ public:
     virtual float getTau () const = 0;
     virtual void setTau (float) = 0;
 
+    virtual unsigned int getNumFeatures () const = 0;
+
     virtual unsigned int getNumClasses () const = 0;
+    virtual std::vector<int> getClassLabels () const = 0;
+
+    virtual uint64_t getNumSeenSamples () const = 0;
 
     virtual int update (const Eigen::Ref<const Eigen::VectorXf> &features, int label, float weight = 1.0) = 0;
     virtual int update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight = 1.0) = 0;

@@ -71,12 +71,10 @@ function onyx_app (dataset_prefix, varargin)
     %% Create classifier
     if ~isempty(load_classifier),
         % Load from file
-        classifier = rofl.OrfSaffari.import_from_file(load_classifier);
+        classifier = onyx.LinearLaRank.import_from_file(load_classifier);
     else
         % Create new
-        num_classes = numel( unique(training_labels) );
-        num_features = size(training_features, 1);
-        classifier = rofl.OrfSaffari(num_classes, num_features, classifier_parameters{:});
+        classifier = onyx.LinearLaRank(classifier_parameters{:});
     end
 
     %% Training
@@ -106,7 +104,7 @@ function onyx_app (dataset_prefix, varargin)
 
         incorrect = sum(predicted_labels ~= testing_labels);
 
-        fprintf('Test error: %d/%d (%.02f %%)\n', incorrect, numel(testing_labels), incorrect/numel(testing_labels)*100);
+        fprintf('Test error: %d/%d (%.05f%%)\n', incorrect, numel(testing_labels), incorrect/numel(testing_labels)*100);
         fprintf('Elapsed time: %f seconds\n', t);
     end
 end

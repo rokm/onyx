@@ -8,16 +8,16 @@ if(MATLAB_FOUND)
     add_definitions(-DMATLAB_MEX_FILE)
 
     # onyx.LinearLaRank: build
-    add_library(larank_mex SHARED +onyx/@LinearLaRank/private/larank_mex.cpp)
-    set_target_properties(larank_mex PROPERTIES PREFIX "" SUFFIX ".${MATLAB_MEXEXT}")
+    add_library(linear_larank_mex SHARED +onyx/@LinearLaRank/private/linear_larank_mex.cpp)
+    set_target_properties(linear_larank_mex PROPERTIES PREFIX "" SUFFIX ".${MATLAB_MEXEXT}")
     if(MSVC)
-        set_target_properties(larank_mex PROPERTIES LINK_FLAGS "/export:mexFunction")
+        set_target_properties(linear_larank_mex PROPERTIES LINK_FLAGS "/export:mexFunction")
     endif()
-    target_link_libraries(larank_mex ${MATLAB_LIBRARIES})
-    target_link_libraries(larank_mex onyx_static)
+    target_link_libraries(linear_larank_mex ${MATLAB_LIBRARIES})
+    target_link_libraries(linear_larank_mex onyx_static)
 
     # onyx.LinearLaRank: install
-    install(TARGETS larank_mex DESTINATION ${CMAKE_INSTALL_PREFIX}/matlab/+onyx/@LinearLaRank/private/)
+    install(TARGETS linear_larank_mex DESTINATION ${CMAKE_INSTALL_PREFIX}/matlab/+onyx/@LinearLaRank/private/)
     install(FILES +onyx/@LinearLaRank/LinearLaRank.m DESTINATION ${CMAKE_INSTALL_PREFIX}/matlab/+onyx/@LinearLaRank)
     install(FILES onyx_app.m DESTINATION ${CMAKE_INSTALL_PREFIX}/matlab/)
 else()

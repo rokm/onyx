@@ -1,4 +1,4 @@
-/* Onyx: Linear LaRank: Pattern
+/* Onyx: Linear LaRank: Decision function
  * Copyright (C) 2008- Antoine Bordes
  * Copyright (C) 2015 Rok Mandeljc
  *
@@ -16,33 +16,42 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONYX__LARANK__PATTERN_H
-#define ONYX__LARANK__PATTERN_H
+#ifndef ONYX__LINEAR_LARANK__DECISION_FUNCTION_H
+#define ONYX__LINEAR_LARANK__DECISION_FUNCTION_H
 
 #include <Eigen/Core>
+
+#include <unordered_map>
 
 
 namespace Onyx {
 namespace LinearLaRank {
 
 
-class Pattern
+class DecisionFunction
 {
 public:
-    Pattern (int id, const Eigen::VectorXf &features, int label, float weight = 1.0);
-    Pattern ();
+    DecisionFunction (int numFeatures = 0);
 
-    virtual ~Pattern ();
+    virtual ~DecisionFunction ();
 
-    bool isValid () const;
+    float computeGradient (const Eigen::VectorXf &features, int label, int this_label) const;
+    float computeScore (const Eigen::VectorXf &features) const;
 
-    void invalidate ();
+    void update (const Eigen::VectorXf &features, float lambda, int64_t pattern_id);
+
+    float getBeta (int64_t pattern_id) const;
+    bool isSupportVector (int64_t pattern_id) const;
+
+    int getNSV () const;
+    float getW2 () const;
 
 public:
-    int64_t id; // ID (effectively sample number)
-    Eigen::VectorXf features; // Feature vector
-    int label; // Label
-    float weight; // Weight
+    // Beta (indicator) values of each support vector
+    std::unordered_map<int64_t, float> beta;
+
+    // Hyperplane weights
+    Eigen::VectorXf w;
 };
 
 

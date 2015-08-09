@@ -27,7 +27,6 @@
 #include <unordered_set>
 #include <random>
 
-
 namespace Onyx {
 namespace LinearLaRank {
 
@@ -47,7 +46,12 @@ public:
     virtual float getTau () const;
     virtual void setTau (float);
 
+    virtual unsigned int getNumFeatures () const;
+
     virtual unsigned int getNumClasses () const;
+    virtual std::vector<int> getClassLabels () const;
+
+    virtual uint64_t getNumSeenSamples () const;
 
     virtual int update (const Eigen::Ref<const Eigen::VectorXf> &features, int label, float weight);
     virtual int update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight);
@@ -195,9 +199,31 @@ void LaRank::setTau (float tau)
 }
 
 
+unsigned int LaRank::getNumFeatures () const
+{
+    return num_features;
+}
+
 unsigned int LaRank::getNumClasses () const
 {
     return decision_functions.size();
+}
+
+std::vector<int> LaRank::getClassLabels () const
+{
+    std::vector<int> labels;
+
+    for (const auto &it: decision_functions) {
+        labels.push_back(it.first);
+    }
+
+    return labels;
+}
+
+
+uint64_t LaRank::getNumSeenSamples () const
+{
+    return num_seen_samples;
 }
 
 

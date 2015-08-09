@@ -24,7 +24,7 @@
 
 #include <boost/program_options.hpp>
 
-#include <onyx/larank/larank.h>
+#include <onyx/linear_larank/larank.h>
 #include "dataset.h"
 
 
@@ -162,7 +162,7 @@ int main (int argc, char **argv)
         std::cout << "Loading classifier from file: " << loadClassifier << std::endl;
         std::cout << std::endl;
 
-        std::ifstream stream(loadClassifier);
+        std::ifstream stream(loadClassifier, std::ios::binary);
         classifier->loadFromStream(stream);
     } else {
         // Create new classifier
@@ -243,7 +243,7 @@ int main (int argc, char **argv)
     // *** Save classifier ***
     if (!saveClassifier.empty()) {
         std::cout << "Saving classifier to file: " << saveClassifier << std::endl;
-        std::ofstream stream(saveClassifier);
+        std::ofstream stream(saveClassifier, std::ios::binary);
         classifier->saveToStream(stream);
         std::cout << "Done!" << std::endl;
     }
