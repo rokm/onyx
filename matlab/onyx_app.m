@@ -1,7 +1,7 @@
 function onyx_app (dataset_prefix, varargin)
     % ONYX_APP (dataset_prefix, ...)
     %
-    % Matlab port of the demo application.
+    % Matlab port of the onyx demo application.
     %
     % The training/testing dataset is assumed to be provided in libsvm
     % format, in files named:
@@ -16,8 +16,8 @@ function onyx_app (dataset_prefix, varargin)
     %     - save_classifier: file to export classifier to after training is
     %       complete (default: '')
     %     - training: enable training (default: true)
-    %     - testing: enable testing (default: true)
-    %     - online_testing: enable online testing (default: false)
+    %     - test: enable testing (default: true)
+    %     - online_test: enable online testing (default: false)
     %     - num_epochs: number of epochs in training (default: 10)
     %     - classifier_parameters: a cell array of parameters to pass to
     %       the classifier's constructor
@@ -27,8 +27,8 @@ function onyx_app (dataset_prefix, varargin)
     parser.addParameter('load_classifier', '', @ischar);
     parser.addParameter('save_classifier', '', @ischar);
     parser.addParameter('training', true, @islogical);
-    parser.addParameter('testing', true, @islogical);
-    parser.addParameter('online_testing', true, @islogical);
+    parser.addParameter('test', true, @islogical);
+    parser.addParameter('online_test', true, @islogical);
     parser.addParameter('num_epochs', 10, @isnumeric);
     parser.addParameter('classifier_parameters', {}, @iscell);
     parser.parse(varargin{:});
@@ -38,8 +38,8 @@ function onyx_app (dataset_prefix, varargin)
     save_classifier = parser.Results.save_classifier;
 
     enable_training = parser.Results.training;
-    enable_testing = parser.Results.testing;
-    enable_online_testing = parser.Results.online_testing;
+    enable_testing = parser.Results.test;
+    enable_online_testing = parser.Results.online_test;
     num_epochs = parser.Results.num_epochs;
 
     classifier_parameters = parser.Results.classifier_parameters;
@@ -47,8 +47,10 @@ function onyx_app (dataset_prefix, varargin)
     %% Load datasets
     if enable_training,
         try
+            fprintf('Loading training dataset...\n');
             training_features = load_data_file( sprintf('%s-train.data', dataset_prefix) );
             training_labels = load_data_file( sprintf('%s-train.labels', dataset_prefix) );
+            fprintf('Loaded training dataset!\n\n');
         catch
             fprintf('Failed to load train set; disabling training!\n');
             training_features = [];
@@ -59,8 +61,10 @@ function onyx_app (dataset_prefix, varargin)
 
     if enable_testing || enable_online_testing,
         try
+            fprintf('Loading test dataset...\n');
             testing_features = load_data_file( sprintf('%s-test.data', dataset_prefix) );
             testing_labels = load_data_file( sprintf('%s-test.labels', dataset_prefix) );
+            fprintf('Loaded test dataset!\n\n');
         catch
             fprintf('Failed to load test set; disabling testing!\n');
             testing_features = [];
@@ -111,29 +115,29 @@ function onyx_app (dataset_prefix, varargin)
         fprintf('Test error: %d/%d (%.05f%%)\n', incorrect, numel(testing_labels), incorrect/numel(testing_labels)*100);
         fprintf('Elapsed time: %f seconds\n', t);
     end
-    
+
     %% Online test
     if enable_online_testing,
         t = tic();
-        
+
         % Permute test samples
         num_test_samples = numel(testing_labels);
         permuted_indices = randperm(num_test_samples);
-        
+
         incorrect = 0;
         for i = 1:numel(permuted_indices),
             idx = permuted_indices(i);
-            
+
             % Predict
             predicted_label = classifier.predict(testing_features(:, idx));
             if predicted_label ~= testing_labels(idx),
                 incorrect = incorrect + 1;
             end
-            
+
             % Update
             classifier.update(testing_features(:, idx), testing_labels(idx));
         end
-        
+
         t = toc(t);
 
         fprintf('\n');
