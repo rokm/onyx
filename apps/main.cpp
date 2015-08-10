@@ -45,12 +45,16 @@ int main (int argc, char **argv)
     std::string saveClassifier;
     std::string loadClassifier;
 
-    bool doTraining = false;
-    bool doTesting = false;
+    bool doTraining = true; // Enable all by default
+    bool doTesting = true; // Enable by default
+    bool doOnlineTesting = false; // Disable by default
 
     unsigned int numEpochs = 10;
     double C = 1.0;
     double tau = 0.0001;
+
+    // Random number generator (with random seed)
+    std::mt19937 random_number_generator(std::random_device{}());
 
     // *** Print banner ***
     std::cout << "Onyx v.1.0, (C) 2015 Rok Mandeljc <rok.mandeljc@gmail.com>" << std::endl;
@@ -71,6 +75,9 @@ int main (int argc, char **argv)
         ("save-classifier", boost::program_options::value<std::string>(&saveClassifier), "optional filename to store classifier")
         ("load-classifier", boost::program_options::value<std::string>(&loadClassifier), "optional filename to load classifier")
         ("epochs", boost::program_options::value<unsigned int>(&numEpochs)->default_value(numEpochs), "number of epochs for (re)training")
+        ("training", boost::program_options::value<bool>(&doTraining)->default_value(doTraining), "enable training (if training data is available)")
+        ("test", boost::program_options::value<bool>(&doTesting)->default_value(doTesting), "enable testing (if testing data is available)")
+        ("online-test", boost::program_options::value<bool>(&doOnlineTesting)->default_value(doOnlineTesting), "enable on-line testing (if testing data is available)")
     ;
     commandLineArguments.add(argArguments);
 
@@ -110,11 +117,15 @@ int main (int argc, char **argv)
         return -1;
     }
 
-    doTraining = !filenameTrainingData.empty() && !filenameTrainingLabels.empty();
-    doTesting = !filenameTestData.empty() && !filenameTestLabels.empty();
+    bool trainingDataAvailable = !filenameTrainingData.empty() && !filenameTrainingLabels.empty();
+    bool testingDataAvailable = !filenameTestData.empty() && !filenameTestLabels.empty();
 
-    if (!doTraining && !doTesting) {
-        std::cout << "Neither training nor testing dataset provided; nothing to do!" << std::endl;
+    doTraining = doTraining && trainingDataAvailable;
+    doTesting = doTesting && testingDataAvailable;
+    doOnlineTesting = doOnlineTesting && testingDataAvailable;
+
+    if (!doTraining && !doTesting && !doOnlineTesting) {
+        std::cout << "Doing neither training nor testing; nothing to do!" << std::endl;
         return 1;
     }
 
@@ -125,6 +136,7 @@ int main (int argc, char **argv)
 
     // *** Load datasets ***
     if (doTraining) {
+        std::cout << "Loading training dataset..." << std::endl;
         try {
             datasetTrain.load(filenameTrainingData, filenameTrainingLabels);
         } catch (std::exception &error) {
@@ -139,7 +151,8 @@ int main (int argc, char **argv)
         std::cout << " classes: " << datasetTrain.numClasses << std::endl;
         std::cout << std::endl;
     }
-    if (doTesting) {
+    if (doTesting || doOnlineTesting) {
+        std::cout << "Loading testing dataset..." << std::endl;
         try {
             datasetTest.load(filenameTestData, filenameTestLabels);
         } catch (std::exception &error) {
@@ -192,7 +205,7 @@ int main (int argc, char **argv)
             std::vector<std::vector<int>::iterator> shuffledSampleIndices(sampleIndices.size());
             std::iota(shuffledSampleIndices.begin(), shuffledSampleIndices.end(), sampleIndices.begin());
 
-            std::shuffle(shuffledSampleIndices.begin(), shuffledSampleIndices.end(), std::mt19937{std::random_device{}()});
+            std::shuffle(shuffledSampleIndices.begin(), shuffledSampleIndices.end(), random_number_generator);
 
             for (unsigned int s = 0; s < shuffledSampleIndices.size(); s++) {
                 int idx = *shuffledSampleIndices[s];
@@ -252,6 +265,9 @@ int main (int argc, char **argv)
     if (!doTraining && doTesting) {
         float testError = 0.0f;
 
+        std::cout << "Performing off-line test..." << std::endl;
+
+        // Experiment
         start = std::chrono::system_clock::now();
 
         for (unsigned int s = 0; s < datasetTest.numSamples; s++) {
@@ -266,6 +282,45 @@ int main (int argc, char **argv)
         end = std::chrono::system_clock::now();
 
         std::cout << "Test error: " << testError << "/" << datasetTest.numSamples << " = " << testError/datasetTest.numSamples*100 << "%" << std::endl;
+        std::cout << "Elapsed time: " << std::chrono::duration<float>(end - start).count() << " seconds." << std::endl;
+        std::cout << std::endl;
+    }
+
+    // *** Online test ***
+    if (doOnlineTesting) {
+        float testError = 0.0f;
+
+        std::cout << "Performing on-line test..." << std::endl;
+
+        // Randomly permute the sample indices
+        std::vector<int> sampleIndices(datasetTest.numSamples);
+        std::iota(sampleIndices.begin(), sampleIndices.end(), 0);
+
+        std::vector<std::vector<int>::iterator> shuffledSampleIndices(sampleIndices.size());
+        std::iota(shuffledSampleIndices.begin(), shuffledSampleIndices.end(), sampleIndices.begin());
+
+        std::shuffle(shuffledSampleIndices.begin(), shuffledSampleIndices.end(), random_number_generator);
+
+        // Experiment
+        start = std::chrono::system_clock::now();
+
+        for (unsigned int s = 0; s < shuffledSampleIndices.size(); s++) {
+            int idx = *shuffledSampleIndices[s];
+            const Eigen::VectorXf &sampleFeature = datasetTest.features[idx];
+            int sampleLabel = datasetTest.labels[idx];
+
+            // Predict
+            if (classifier->predict(sampleFeature) != sampleLabel) {
+                testError++;
+            }
+
+            // Update
+            classifier->update(sampleFeature, sampleLabel);
+        }
+
+        end = std::chrono::system_clock::now();
+
+        std::cout << "Online test error: " << testError << "/" << datasetTest.numSamples << " = " << testError/datasetTest.numSamples*100 << "%" << std::endl;
         std::cout << "Elapsed time: " << std::chrono::duration<float>(end - start).count() << " seconds." << std::endl;
         std::cout << std::endl;
     }

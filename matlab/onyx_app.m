@@ -15,8 +15,9 @@ function onyx_app (dataset_prefix, varargin)
     %       training and testing (default: '')
     %     - save_classifier: file to export classifier to after training is
     %       complete (default: '')
-    %     - enable_training: enable training (default: true)
-    %     - enable_testing: enable testing (default: true)
+    %     - training: enable training (default: true)
+    %     - testing: enable testing (default: true)
+    %     - online_testing: enable online testing (default: false)
     %     - num_epochs: number of epochs in training (default: 10)
     %     - classifier_parameters: a cell array of parameters to pass to
     %       the classifier's constructor
@@ -25,8 +26,9 @@ function onyx_app (dataset_prefix, varargin)
     parser = inputParser();
     parser.addParameter('load_classifier', '', @ischar);
     parser.addParameter('save_classifier', '', @ischar);
-    parser.addParameter('enable_training', true, @islogical);
-    parser.addParameter('enable_testing', true, @islogical);
+    parser.addParameter('training', true, @islogical);
+    parser.addParameter('testing', true, @islogical);
+    parser.addParameter('online_testing', true, @islogical);
     parser.addParameter('num_epochs', 10, @isnumeric);
     parser.addParameter('classifier_parameters', {}, @iscell);
     parser.parse(varargin{:});
@@ -35,8 +37,9 @@ function onyx_app (dataset_prefix, varargin)
     load_classifier = parser.Results.load_classifier;
     save_classifier = parser.Results.save_classifier;
 
-    enable_training = parser.Results.enable_training;
-    enable_testing = parser.Results.enable_testing;
+    enable_training = parser.Results.training;
+    enable_testing = parser.Results.testing;
+    enable_online_testing = parser.Results.online_testing;
     num_epochs = parser.Results.num_epochs;
 
     classifier_parameters = parser.Results.classifier_parameters;
@@ -54,7 +57,7 @@ function onyx_app (dataset_prefix, varargin)
         end
     end
 
-    if enable_testing,
+    if enable_testing || enable_online_testing,
         try
             testing_features = load_data_file( sprintf('%s-test.data', dataset_prefix) );
             testing_labels = load_data_file( sprintf('%s-test.labels', dataset_prefix) );
@@ -63,6 +66,7 @@ function onyx_app (dataset_prefix, varargin)
             testing_features = [];
             testing_labels = [];
             enable_testing = false;
+            enable_online_testing = false;
         end
     end
 
@@ -105,6 +109,35 @@ function onyx_app (dataset_prefix, varargin)
         incorrect = sum(predicted_labels ~= testing_labels);
 
         fprintf('Test error: %d/%d (%.05f%%)\n', incorrect, numel(testing_labels), incorrect/numel(testing_labels)*100);
+        fprintf('Elapsed time: %f seconds\n', t);
+    end
+    
+    %% Online test
+    if enable_online_testing,
+        t = tic();
+        
+        % Permute test samples
+        num_test_samples = numel(testing_labels);
+        permuted_indices = randperm(num_test_samples);
+        
+        incorrect = 0;
+        for i = 1:numel(permuted_indices),
+            idx = permuted_indices(i);
+            
+            % Predict
+            predicted_label = classifier.predict(testing_features(:, idx));
+            if predicted_label ~= testing_labels(idx),
+                incorrect = incorrect + 1;
+            end
+            
+            % Update
+            classifier.update(testing_features(:, idx), testing_labels(idx));
+        end
+        
+        t = toc(t);
+
+        fprintf('\n');
+        fprintf('Online test error: %d/%d (%.05f%%)\n', incorrect, numel(testing_labels), incorrect/numel(testing_labels)*100);
         fprintf('Elapsed time: %f seconds\n', t);
     end
 end
