@@ -20,6 +20,7 @@
 #define ONYX__LINEAR_LARANK__LARANK_H
 
 #include <cstdint>
+#include <vector>
 #include <Eigen/Core>
 
 #include <onyx/export.h>

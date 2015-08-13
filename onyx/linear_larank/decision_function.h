@@ -44,7 +44,7 @@ public:
     float getBeta (int64_t pattern_id) const;
     bool isSupportVector (int64_t pattern_id) const;
 
-    int getNSV () const;
+    size_t getNSV () const;
     float getW2 () const;
 
 public:

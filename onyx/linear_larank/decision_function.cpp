@@ -34,7 +34,7 @@ DecisionFunction::~DecisionFunction ()
 
 float DecisionFunction::computeGradient (const Eigen::VectorXf &features, int true_label, int predicted_label) const
 {
-    return (true_label == predicted_label ? 1.0 : 0.0) - computeScore(features);
+    return (true_label == predicted_label ? 1.0f : 0.0f) - computeScore(features);
 }
 
 float DecisionFunction::computeScore (const Eigen::VectorXf &features) const
@@ -59,7 +59,7 @@ void DecisionFunction::update (const Eigen::VectorXf &features, float lambda, in
 float DecisionFunction::getBeta (int64_t pattern_id) const
 {
     auto it = beta.find(pattern_id);
-    return (it == beta.end()) ? 0.0 : it->second;
+    return (it == beta.end()) ? 0.0f : it->second;
 }
 
 bool DecisionFunction::isSupportVector (int64_t pattern_id) const
@@ -67,7 +67,7 @@ bool DecisionFunction::isSupportVector (int64_t pattern_id) const
     return getBeta(pattern_id) != 0;
 }
 
-int DecisionFunction::getNSV () const
+size_t DecisionFunction::getNSV () const
 {
     return beta.size();
 }
