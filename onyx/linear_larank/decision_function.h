@@ -21,6 +21,7 @@
 
 #include <Eigen/Core>
 
+#include <cstdint>
 #include <unordered_map>
 
 

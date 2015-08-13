@@ -19,6 +19,7 @@
 #ifndef ONYX__LINEAR_ARANK__PATTERN_H
 #define ONYX__LINEAR_LARANK__PATTERN_H
 
+#include <cstdint>
 #include <Eigen/Core>
 
 

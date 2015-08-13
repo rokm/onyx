@@ -19,7 +19,9 @@
 #ifndef ONYX__LINEAR_LARANK__LARANK_H
 #define ONYX__LINEAR_LARANK__LARANK_H
 
+#include <cstdint>
 #include <Eigen/Core>
+
 #include <onyx/export.h>
 
 
