@@ -90,12 +90,12 @@ static void classifier_delete (int nlhs, mxArray **plhs, int nrhs, const mxArray
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -127,7 +127,7 @@ static void __classifier_predict (std::unique_ptr<Onyx::LinearLaRank::Classifier
 
         // Copy label
         if (labelsPtr) {
-            labelsPtr[i] = predictedLabel;
+            labelsPtr[i] = static_cast<float>(predictedLabel);
         }
     }
 }
@@ -140,7 +140,7 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
         mexErrMsgTxt("Command requires two input arguments!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -149,7 +149,7 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -159,8 +159,8 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
     auto &classifier = iterator->second;
 
     // Get feature matrix/vector: DxN matrix for N samples
-    unsigned int numFeatures = mxGetM(prhs[1]); // rows = feature dimension
-    unsigned int numSamples = mxGetN(prhs[1]); // columns = number of samples
+    unsigned int numFeatures = static_cast<unsigned int>(mxGetM(prhs[1])); // rows = feature dimension
+    unsigned int numSamples = static_cast<unsigned int>(mxGetN(prhs[1])); // columns = number of samples
     unsigned int numClasses = classifier->getNumClasses();
 
     // Initialize output
@@ -201,7 +201,7 @@ static void __classifier_update (std::unique_ptr<Onyx::LinearLaRank::Classifier>
 {
     for (unsigned int i = 0; i < numSamples; i++) {
         Eigen::Map< const Eigen::Matrix<FeatureType, Eigen::Dynamic, 1> > features(featuresPtr + i*numFeatures, numFeatures);
-        classifier->update(features, labelsPtr[i], weightsPtr ? weightsPtr[i] : 1.0);
+        classifier->update(features, static_cast<int>(labelsPtr[i]), weightsPtr ? static_cast<float>(weightsPtr[i]) : 1.0f);
     }
 }
 
@@ -213,7 +213,7 @@ static void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray
         mexErrMsgTxt("Command requires three or four input arguments!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -230,7 +230,7 @@ static void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -240,8 +240,8 @@ static void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray
     auto &classifier = iterator->second;
 
     // Get feature matrix/vector: DxN matrix for N samples
-    unsigned int numFeatures = mxGetM(prhs[1]); // rows = feature dimension
-    unsigned int numSamples = mxGetN(prhs[1]); // columns = number of samples
+    unsigned int numFeatures = static_cast<unsigned int>(mxGetM(prhs[1])); // rows = feature dimension
+    unsigned int numSamples = static_cast<unsigned int>(mxGetN(prhs[1])); // columns = number of samples
 
     // Validate number of labels
     if (numSamples != mxGetNumberOfElements(prhs[2])) {
@@ -288,7 +288,7 @@ static void classifier_serialize (int nlhs, mxArray **plhs, int nrhs, const mxAr
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -297,7 +297,7 @@ static void classifier_serialize (int nlhs, mxArray **plhs, int nrhs, const mxAr
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -315,7 +315,7 @@ static void classifier_serialize (int nlhs, mxArray **plhs, int nrhs, const mxAr
     // Determine length of the data in the stream; after saveToStream(),
     // the output stream pointer should already be at the end of the
     // stream
-    int streamLength = stream.tellp();
+    size_t streamLength = static_cast<size_t>(stream.tellp());
 
     // Allocate Matlab buffer
     plhs[0] = mxCreateNumericMatrix(1, streamLength, mxUINT8_CLASS, mxREAL);
@@ -336,7 +336,7 @@ static void classifier_deserialize (int nlhs, mxArray **plhs, int nrhs, const mx
         mexErrMsgTxt("Command requires two input arguments!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -349,7 +349,7 @@ static void classifier_deserialize (int nlhs, mxArray **plhs, int nrhs, const mx
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -378,7 +378,7 @@ static void classifier_get_c (int nlhs, mxArray **plhs, int nrhs, const mxArray 
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -387,7 +387,7 @@ static void classifier_get_c (int nlhs, mxArray **plhs, int nrhs, const mxArray 
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -412,7 +412,7 @@ static void classifier_set_c (int nlhs, mxArray **plhs, int nrhs, const mxArray 
         mexErrMsgTxt("Command requires two input arguments!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -420,12 +420,12 @@ static void classifier_set_c (int nlhs, mxArray **plhs, int nrhs, const mxArray 
         mexErrMsgTxt("Command requires no output arguments!");
     }
 
-    if (!mxIsScalar(prhs[1]) || !mxIsNumeric(prhs[1])) {
+    if (mxGetNumberOfElements(prhs[1]) != 1 || !mxIsNumeric(prhs[1])) {
         mexErrMsgTxt("Second argument needs to be a numeric scalar!");
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -435,7 +435,8 @@ static void classifier_set_c (int nlhs, mxArray **plhs, int nrhs, const mxArray 
     auto &classifier = iterator->second;
 
     // Set value
-    classifier->setC(mxGetScalar(prhs[1]));
+    float value = static_cast<float>(mxGetScalar(prhs[1]));
+    classifier->setC(value);
 }
 
 
@@ -450,7 +451,7 @@ static void classifier_get_tau (int nlhs, mxArray **plhs, int nrhs, const mxArra
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -459,7 +460,7 @@ static void classifier_get_tau (int nlhs, mxArray **plhs, int nrhs, const mxArra
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -483,7 +484,7 @@ static void classifier_set_tau (int nlhs, mxArray **plhs, int nrhs, const mxArra
         mexErrMsgTxt("Command requires two input arguments!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -491,12 +492,12 @@ static void classifier_set_tau (int nlhs, mxArray **plhs, int nrhs, const mxArra
         mexErrMsgTxt("Command requires no output arguments!");
     }
 
-    if (!mxIsScalar(prhs[1]) || !mxIsNumeric(prhs[1])) {
+    if (mxGetNumberOfElements(prhs[1]) != 1 || !mxIsNumeric(prhs[1])) {
         mexErrMsgTxt("Second argument needs to be a numeric scalar!");
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -506,7 +507,8 @@ static void classifier_set_tau (int nlhs, mxArray **plhs, int nrhs, const mxArra
     auto &classifier = iterator->second;
 
     // Set value
-    classifier->setTau(mxGetScalar(prhs[1]));
+    float value = static_cast<float>(mxGetScalar(prhs[1]));
+    classifier->setTau(value);
 }
 
 
@@ -521,7 +523,7 @@ static void classifier_get_num_features (int nlhs, mxArray **plhs, int nrhs, con
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -530,7 +532,7 @@ static void classifier_get_num_features (int nlhs, mxArray **plhs, int nrhs, con
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -555,7 +557,7 @@ static void classifier_get_num_classes (int nlhs, mxArray **plhs, int nrhs, cons
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -564,7 +566,7 @@ static void classifier_get_num_classes (int nlhs, mxArray **plhs, int nrhs, cons
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -589,7 +591,7 @@ static void classifier_get_class_labels (int nlhs, mxArray **plhs, int nrhs, con
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -598,7 +600,7 @@ static void classifier_get_class_labels (int nlhs, mxArray **plhs, int nrhs, con
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -629,7 +631,7 @@ static void classifier_get_num_seen_samples (int nlhs, mxArray **plhs, int nrhs,
         mexErrMsgTxt("Command requires one input argument!");
     }
 
-    if (!mxIsScalar(prhs[0]) || !mxIsNumeric(prhs[0])) {
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
@@ -638,7 +640,7 @@ static void classifier_get_num_seen_samples (int nlhs, mxArray **plhs, int nrhs,
     }
 
     // Get handle ID
-    int id = mxGetScalar(prhs[0]);
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Try to find the classifier
     auto iterator = objects.find(id);
@@ -648,7 +650,8 @@ static void classifier_get_num_seen_samples (int nlhs, mxArray **plhs, int nrhs,
     auto &classifier = iterator->second;
 
     // Return value
-    plhs[0] = mxCreateDoubleScalar(classifier->getNumSeenSamples());
+    double num = static_cast<double>(classifier->getNumSeenSamples());
+    plhs[0] = mxCreateDoubleScalar(num);
 }
 
 
@@ -679,7 +682,7 @@ void mexFunction (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
         mexErrMsgTxt("First argument needs to be a numeric command!");
     }
 
-    command = mxGetScalar(prhs[0]);
+    command = static_cast<int>(mxGetScalar(prhs[0]));
 
     // Skip the command
     nrhs--;
