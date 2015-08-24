@@ -18,7 +18,8 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
 # Eigen is a global dependency
-find_package(Eigen3 REQUIRED)
+# NOTE: versions prior to 3.2.5 have a bug with Eigen::Ref ambiguity...
+find_package(Eigen3 3.2.5 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Library
