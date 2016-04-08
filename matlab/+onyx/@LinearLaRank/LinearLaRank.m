@@ -4,7 +4,7 @@ classdef LinearLaRank < handle
     % This class wraps the C++ imlementation of Linear LaRank from onyx
     % library.
     %
-    % (C) 2015 Rok Mandeljc <rok.mandeljc@gmail.com>
+    % (C) 2015-2016 Rok Mandeljc <rok.mandeljc@gmail.com>
 
     % Commands enum - keep it in sync with MEX file!
     properties (Access = private, Constant)
@@ -22,6 +22,7 @@ classdef LinearLaRank < handle
         CommandGetNumClasses = 11
         CommandGetClassLabels = 12
         CommandGetNumSeenSamples = 13
+        CommandGetDecisionFunctionWeights = 14
     end
 
     properties (Access = private)
@@ -35,6 +36,7 @@ classdef LinearLaRank < handle
         num_classes
         num_seen_samples
         class_labels
+        decision_functions
     end
 
     %% Core API
@@ -230,6 +232,15 @@ classdef LinearLaRank < handle
 
         function value = get.num_seen_samples (self)
             value = linear_larank_mex(self.CommandGetNumSeenSamples, self.handle);
+        end
+
+        function value = get.decision_functions (self)
+            labels = self.class_labels;
+            
+            value = zeros(self.num_features, numel(labels));
+            for l = 1:numel(labels),
+                value(:,l) = linear_larank_mex(self.CommandGetDecisionFunctionWeights, self.handle, labels(l));
+            end
         end
     end
 

@@ -77,6 +77,11 @@ float DecisionFunction::getW2 () const
     return w.squaredNorm();
 }
 
+const Eigen::VectorXf &DecisionFunction::getWeights () const
+{
+    return w;
+}
+
 
 } // LinearLaRank
 } // Onyx

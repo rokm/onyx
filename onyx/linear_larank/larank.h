@@ -39,7 +39,7 @@ public:
     virtual void setC (float C) = 0;
 
     virtual float getTau () const = 0;
-    virtual void setTau (float) = 0;
+    virtual void setTau (float tau) = 0;
 
     virtual unsigned int getNumFeatures () const = 0;
 
@@ -63,6 +63,8 @@ public:
 
     virtual void saveToStream (std::ostream &stream) const = 0;
     virtual void loadFromStream (std::istream &stream) = 0;
+
+    virtual const Eigen::VectorXf &getDecisionFunctionWeights (int label) const = 0;
 };
 
 extern ONYX_EXPORT Classifier *create_classifier ();

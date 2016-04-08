@@ -44,7 +44,7 @@ public:
     virtual void setC (float C);
 
     virtual float getTau () const;
-    virtual void setTau (float);
+    virtual void setTau (float tau);
 
     virtual unsigned int getNumFeatures () const;
 
@@ -64,10 +64,12 @@ public:
 
     virtual float computeDualityGap () const;
 
-    virtual void seedRngEngine (unsigned int);
+    virtual void seedRngEngine (unsigned int seed);
 
     virtual void saveToStream (std::ostream &stream) const;
     virtual void loadFromStream (std::istream &stream);
+
+    virtual const Eigen::VectorXf &getDecisionFunctionWeights (int label) const;
 
 private:
     // Per-class gradient
@@ -230,6 +232,17 @@ uint64_t LaRank::getNumSeenSamples () const
 void LaRank::seedRngEngine (unsigned int seed)
 {
     rng.seed(seed);
+}
+
+
+const Eigen::VectorXf &LaRank::getDecisionFunctionWeights (int label) const
+{
+    const DecisionFunction *decision_function = getDecisionFunction(label);
+    if (!decision_function) {
+        throw std::runtime_error("Invalid label!");
+    }
+
+    return decision_function->getWeights();
 }
 
 
@@ -668,13 +681,13 @@ const Pattern &LaRank::getRandomPattern ()
 DecisionFunction *LaRank::getDecisionFunction (int label)
 {
     auto it = decision_functions.find(label);
-    return it == decision_functions.end() ? NULL : &it->second;
+    return it == decision_functions.end() ? nullptr : &it->second;
 }
 
 const DecisionFunction *LaRank::getDecisionFunction (int label) const
 {
     auto it = decision_functions.find(label);
-    return it == decision_functions.end() ? NULL : &it->second;
+    return it == decision_functions.end() ? nullptr : &it->second;
 }
 
 // Main optimization step
@@ -711,7 +724,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 
     // Find yp
     gradient_t ygp;
-    DecisionFunction *outp = NULL;
+    DecisionFunction *outp = nullptr;
     unsigned int p;
     for (p = 0; p < gradients.size(); p++) {
         gradient_t &current = gradients[p];
@@ -733,7 +746,7 @@ LaRank::process_return_t LaRank::process (const Pattern &pattern, process_type_t
 
     // Find ym
     gradient_t ygm;
-    DecisionFunction *outm = NULL;
+    DecisionFunction *outm = nullptr;
     int m;
     for (m = gradients.size() - 1; m >= 0; m--) {
         gradient_t &current = gradients[m];

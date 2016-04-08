@@ -47,6 +47,8 @@ public:
     size_t getNSV () const;
     float getW2 () const;
 
+    const Eigen::VectorXf &getWeights () const;
+
 public:
     // Beta (indicator) values of each support vector
     std::unordered_map<int64_t, float> beta;

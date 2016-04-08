@@ -44,6 +44,7 @@ enum {
     CommandGetNumClasses,
     CommandGetClassLabels,
     CommandGetNumSeenSamples,
+    CommandGetDecisionFunctionWeights,
 };
 
 
@@ -656,6 +657,51 @@ static void classifier_get_num_seen_samples (int nlhs, mxArray **plhs, int nrhs,
 
 
 // *********************************************************************
+// *                    GetDecisionFunctionWeights                     *
+// *********************************************************************
+// value = classifier_get_decision_function_weights (id, label)
+static void classifier_get_decision_function_weights (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
+{
+    // Validate arguments
+    if (nrhs != 2) {
+        mexErrMsgTxt("Command requires two input arguments!");
+    }
+
+    if (mxGetNumberOfElements(prhs[0]) != 1 || !mxIsNumeric(prhs[0])) {
+        mexErrMsgTxt("First input argument needs to be a numeric ID!");
+    }
+
+    if (mxGetNumberOfElements(prhs[1]) != 1 || !mxIsNumeric(prhs[1])) {
+        mexErrMsgTxt("Second input argument needs to be a numeric label!");
+    }
+
+    if (nlhs != 1) {
+        mexErrMsgTxt("Command requires one output argument!");
+    }
+
+    // Get handle ID
+    int id = static_cast<int>(mxGetScalar(prhs[0]));
+
+    // Try to find the classifier
+    auto iterator = objects.find(id);
+    if (iterator == objects.end()) {
+        mexErrMsgTxt("Invalid handle ID!");
+    }
+    auto &classifier = iterator->second;
+
+    // Get the weights and copy them to output vector
+    int label = static_cast<int>(mxGetScalar(prhs[1]));
+    const Eigen::VectorXf &weights = classifier->getDecisionFunctionWeights(label);
+
+    plhs[0] = mxCreateNumericMatrix(weights.size(), 1, mxDOUBLE_CLASS, mxREAL);
+    double *W = static_cast<double *>(mxGetData(plhs[0]));
+    for (int i = 0; i < weights.size(); i++) {
+        *W++ = weights[i];
+    }
+}
+
+
+// *********************************************************************
 // *                        Matlab entry point                         *
 // *********************************************************************
 void mexFunction (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
@@ -730,6 +776,9 @@ void mexFunction (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
         }
         case CommandGetNumSeenSamples: {
             return classifier_get_num_seen_samples(nlhs, plhs, nrhs, prhs);
+        }
+        case CommandGetDecisionFunctionWeights: {
+            return classifier_get_decision_function_weights(nlhs, plhs, nrhs, prhs);
         }
         default: {
             mexErrMsgTxt("Unrecognized command value!");
