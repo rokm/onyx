@@ -1,6 +1,6 @@
 /* Onyx: Linear LaRank: Pattern
  * Copyright (C) 2008- Antoine Bordes
- * Copyright (C) 2015 Rok Mandeljc
+ * Copyright (C) 2015-2016 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

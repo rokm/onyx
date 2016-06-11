@@ -1,5 +1,5 @@
 /* Onyx: Linear LaRank: MEX interface for Matlab wrapper class
- * Copyright (C) 2015 Rok Mandeljc
+ * Copyright (C) 2015-2016 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

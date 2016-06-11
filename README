@@ -1,0 +1,73 @@
+onyx
+~~~~
+(C) 2015-2016 Rok Mandeljc <rok.mandeljc@gmail.com>
+
+
+1. Introduction
+~~~~~~~~~~~~~~~
+
+Onyx is a library that aims to provide implementations of on-line
+classification approaches. It is written in modern C++ and Eigen, and
+offers Matlab bindings.
+
+One of the key features of Onyx is full support for state serialization
+and deserialization, which allows storing and restoring the classifier
+between training/testing/update sessions.
+
+
+2. Methods
+~~~~~~~~~~
+
+Currently, the only implemented method is a port of Antoine Bordes'
+Linear LaRank code:
+https://www.hds.utc.fr/~bordesan/dokuwiki/en/larank
+
+If you use onyx for research, please make sure to cite Antoine's paper:
+@inproceedings{bordes2007solving,
+  title = {Solving multiclass support vector machines with LaRank},
+  author = {Bordes, Antoine and Bottou, L{\'e}on and Gallinari, Patrick and Weston, Jason},
+  booktitle = {Proceedings of the 24th international conference on Machine learning},
+  pages = {89--96},
+  year = {2007},
+  doi = {10.1145/1273496.1273508}
+}
+
+
+3. Installation
+~~~~~~~~~~~~~~~
+
+Onyx has the following dependencies:
+- C++ compiler and CMake
+- Eigen 3.2.5 or newer
+- Boost 1.42 or newer (for the demo application)
+- Matlab (for Matlab bindings)
+
+
+To build onyx, use cmake; in unpacked source directory, issue:
+
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+make
+make install
+
+
+4. Matlab bindings
+~~~~~~~~~~~~~~~~~~
+
+To enable Matlab bindings, add specify the root to your Matlab
+installation via the MATLAB_ROOT_DIR CMake variable, e.g.:
+cmake .. -DMATLAB_ROOT_DIR=/usr/local/MATLAB/R2015b -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+
+Matlab files - a port of the demo application, and the wrapper class -
+will then be installed to ${INSTALL_PREFIX}/matlab, so make sure that
+folder is in your Matlab path.
+
+The MEX file is dynamically linked against the onyx shared library, so
+you need to make sure the latter is in your library path; on Windows,
+this can be achieved by manipulating PATH environment variable from
+inside Matlab. On linux, the path needs to be added to LD_LIBRARY_PATH
+environment variable before Matlab is started.
+
+To demonstrate the use of the wrapper class, a Matlab port of the demo
+application is provided as onyx_app.m
