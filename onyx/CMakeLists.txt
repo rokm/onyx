@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 2.8)
-project(libonyx CXX)
-
 include(GenerateExportHeader)
 
+# NOTE: versions prior to 3.2.5 have a bug with Eigen::Ref ambiguity...
+find_package(Eigen3 3.2.5 REQUIRED)
+
+
 set(onyx_HEADERS
-    ${PROJECT_BINARY_DIR}/export.h
+    ${CMAKE_CURRENT_BINARY_DIR}/export.h
 )
 
 # Linear LaRank
@@ -23,6 +24,10 @@ add_library(onyx SHARED
     ${onyx_SOURCES} ${onyx_HEADERS}
     ${linear_larank_SOURCES} ${linear_larank_HEADERS}
 )
+
+target_include_directories(onyx PUBLIC ${EIGEN3_INCLUDE_DIR})
+target_include_directories(onyx PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(onyx PUBLIC ${PROJECT_BINARY_DIR})
 
 # Export headers
 generate_export_header(onyx EXPORT_FILE_NAME export.h)
