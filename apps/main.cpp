@@ -223,7 +223,7 @@ int main (int argc, char **argv)
                 classifier->update(sampleFeature, sampleLabel, 1.0f);
 
                 // Print progress
-                if (s && s % sampleRatio == 0) {
+                if (s && sampleRatio && s % sampleRatio == 0) {
                     std::cout << "Epoch: " << epoch << ": ";
                     std::cout << (10 * s) / sampleRatio << "%";
                     std::cout << " -> training error: " << trainError[epoch];
