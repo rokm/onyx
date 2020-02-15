@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-project(onyx_matlab CXX)
-
 find_package(Matlab)
 
 if(MATLAB_FOUND)
