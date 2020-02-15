@@ -93,13 +93,13 @@ classdef LinearLaRank < handle
             %    to probabilities via exponential function
 
             if nargout > 1,
-                [ labels, scores ] = linear_larank_mex(self.CommandPredict, self.handle, features);
+                [ labels, scores ] = linear_larank_mex(self.CommandPredict, self.handle, single(features));
                 if nargout > 2,
                     probabilities = exp(scores);
                     probabilities = bsxfun(@rdivide, probabilities, sum(probabilities)); % Normalize
                 end
             else
-                labels = linear_larank_mex(self.CommandPredict, self.handle, features);
+                labels = linear_larank_mex(self.CommandPredict, self.handle, single(features));
             end
         end
 
@@ -117,9 +117,9 @@ classdef LinearLaRank < handle
             %  - weights: optional 1xN vector of sample weights
 
             if ~exist('weights', 'var') || isempty(weights),
-                linear_larank_mex(self.CommandUpdate, self.handle, features, labels);
+                linear_larank_mex(self.CommandUpdate, self.handle, single(features), labels);
             else
-                linear_larank_mex(self.CommandUpdate, self.handle, features, labels, weights);
+                linear_larank_mex(self.CommandUpdate, self.handle, single(features), labels, weights);
             end
         end
 
@@ -177,6 +177,10 @@ classdef LinearLaRank < handle
                 num_test_samples = size(test_features, 2);
                 assert(num_test_samples == numel(test_labels), 'Number of labels in test dataset does not match the number of samples!');
             end
+
+            % Ensure features are in single-precision format
+            features = single(features);
+            test_features = single(test_features);
 
             % Train for several epochs
             error = nan(num_epochs, 1);
@@ -236,7 +240,7 @@ classdef LinearLaRank < handle
 
         function value = get.decision_functions (self)
             labels = self.class_labels;
-            
+
             value = zeros(self.num_features, numel(labels));
             for l = 1:numel(labels),
                 value(:,l) = linear_larank_mex(self.CommandGetDecisionFunctionWeights, self.handle, labels(l));

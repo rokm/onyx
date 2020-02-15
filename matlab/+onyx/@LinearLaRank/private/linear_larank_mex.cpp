@@ -150,8 +150,8 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
-    if (!mxIsSingle(prhs[1]) && !mxIsDouble(prhs[1])) {
-        mexErrMsgTxt("Second input argument needs to be a single or double vector/matrix!");
+    if (!mxIsSingle(prhs[1])) {
+        mexErrMsgTxt("Second input argument needs to be a single-precision vector/matrix!");
     }
 
     // Get handle ID
@@ -181,21 +181,13 @@ static void classifier_predict (int nlhs, mxArray **plhs, int nrhs, const mxArra
     float *labelsPtr = (nlhs >= 1) ? static_cast<float *>(mxGetData(plhs[0])) : 0;
     float *scoresPtr = (nlhs >= 2) ? static_cast<float *>(mxGetData(plhs[1])) : 0;
 
-    if (mxIsDouble(prhs[1])) {
-        // Double-precision features
-        __classifier_predict<double>(classifier,
-            static_cast<const double *>(mxGetData(prhs[1])),
-            numClasses, numSamples, numFeatures,
-            labelsPtr,
-            scoresPtr);
-    } else {
-        // Single-precision features
-        __classifier_predict<float>(classifier,
-            static_cast<const float *>(mxGetData(prhs[1])),
-            numClasses, numSamples, numFeatures,
-            labelsPtr,
-            scoresPtr);
-    }
+
+    // Single-precision features
+    __classifier_predict<float>(classifier,
+        static_cast<const float *>(mxGetData(prhs[1])),
+        numClasses, numSamples, numFeatures,
+        labelsPtr,
+        scoresPtr);
 }
 
 
@@ -226,8 +218,8 @@ static void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray
         mexErrMsgTxt("First input argument needs to be a numeric ID!");
     }
 
-    if (!mxIsSingle(prhs[1]) && !mxIsDouble(prhs[1])) {
-        mexErrMsgTxt("Second input argument needs to be a single or double vector/matrix!");
+    if (!mxIsSingle(prhs[1])) {
+        mexErrMsgTxt("Second input argument needs to be a single-precision vector/matrix!");
     }
 
     if (!mxIsDouble(prhs[2])) {
@@ -266,23 +258,13 @@ static void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray
     double *weightsPtr = (nrhs >= 4) ? static_cast<double *>(mxGetData(prhs[3])) : 0;
 
     // Process all samples
-    if (mxIsDouble(prhs[1])) {
-        // Double-precision features
-        __classifier_update<double>(classifier,
-            static_cast<const double *>(mxGetData(prhs[1])),
-            labelsPtr,
-            weightsPtr,
-            numSamples,
-            numFeatures);
-    } else {
-        // Single-precision features
-        __classifier_update<float>(classifier,
-            static_cast<const float *>(mxGetData(prhs[1])),
-            labelsPtr,
-            weightsPtr,
-            numSamples,
-            numFeatures);
-    }
+    // Single-precision features
+    __classifier_update<float>(classifier,
+        static_cast<const float *>(mxGetData(prhs[1])),
+        labelsPtr,
+        weightsPtr,
+        numSamples,
+        numFeatures);
 }
 
 

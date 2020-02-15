@@ -54,13 +54,9 @@ public:
     virtual uint64_t getNumSeenSamples () const;
 
     virtual int update (const Eigen::Ref<const Eigen::VectorXf> &features, int label, float weight);
-    virtual int update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight);
 
     virtual int predict (const Eigen::Ref<const Eigen::VectorXf> &features) const;
-    virtual int predict (const Eigen::Ref<const Eigen::VectorXd> &features) const;
-
     virtual int predict (const Eigen::Ref<const Eigen::VectorXf> &features, Eigen::Ref<Eigen::VectorXf> scores) const;
-    virtual int predict (const Eigen::Ref<const Eigen::VectorXd> &features, Eigen::Ref<Eigen::VectorXf> scores) const;
 
     virtual float computeDualityGap () const;
 
@@ -539,12 +535,6 @@ int LaRank::update (const Eigen::Ref<const Eigen::VectorXf> &features, int label
     return pro_ret.predicted_label;
 }
 
-int LaRank::update (const Eigen::Ref<const Eigen::VectorXd> &features, int label, float weight)
-{
-    Eigen::VectorXf convertedFeatures = features.cast<float>();
-    return update(convertedFeatures, label, weight);
-}
-
 
 // *********************************************************************
 // *                              Predict                              *
@@ -566,13 +556,6 @@ int LaRank::predict (const Eigen::Ref<const Eigen::VectorXf> &features) const
     return res;
 }
 
-int LaRank::predict (const Eigen::Ref<const Eigen::VectorXd> &features) const
-{
-    Eigen::VectorXf convertedFeatures = features.cast<float>();
-    return predict(convertedFeatures);
-}
-
-
 int LaRank::predict (const Eigen::Ref<const Eigen::VectorXf> &features, Eigen::Ref<Eigen::VectorXf> scores) const
 {
     int res = -1;
@@ -591,12 +574,6 @@ int LaRank::predict (const Eigen::Ref<const Eigen::VectorXf> &features, Eigen::R
     }
 
     return res;
-}
-
-int LaRank::predict (const Eigen::Ref<const Eigen::VectorXd> &features, Eigen::Ref<Eigen::VectorXf> scores) const
-{
-    Eigen::VectorXf convertedFeatures = features.cast<float>();
-    return predict(convertedFeatures, scores);
 }
 
 
