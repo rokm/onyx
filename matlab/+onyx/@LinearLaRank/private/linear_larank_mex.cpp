@@ -61,6 +61,8 @@ std::map< int, std::unique_ptr<Onyx::LinearLaRank::Classifier> > objects;
 // id = classifier_create ()
 static void classifier_create (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
+    std::ignore = prhs;
+
     // Validate arguments
     if (nrhs != 0) {
         mexErrMsgTxt("Command requires no input arguments!");
@@ -86,6 +88,9 @@ static void classifier_create (int nlhs, mxArray **plhs, int nrhs, const mxArray
 // classifier_delete (id)
 static void classifier_delete (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
+    std::ignore = nlhs;
+    std::ignore = plhs;
+
     // Validate arguments
     if (nrhs != 1) {
         mexErrMsgTxt("Command requires one input argument!");
@@ -209,6 +214,9 @@ static void __classifier_update (std::unique_ptr<Onyx::LinearLaRank::Classifier>
 // classifier_update (id, features, labels, weights)
 static void classifier_update (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
+    std::ignore = nlhs;
+    std::ignore = plhs;
+
     // Validate arguments
     if (nrhs != 3 && nrhs != 4) {
         mexErrMsgTxt("Command requires three or four input arguments!");
@@ -332,6 +340,8 @@ static void classifier_serialize (int nlhs, mxArray **plhs, int nrhs, const mxAr
 // data = classifier_deserialize (id, stream)
 static void classifier_deserialize (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
+    std::ignore = plhs;
+
     // Validate arguments
     if (nrhs != 2) {
         mexErrMsgTxt("Command requires two input arguments!");
@@ -408,6 +418,8 @@ static void classifier_get_c (int nlhs, mxArray **plhs, int nrhs, const mxArray 
 // classifier_set_c (id, value)
 static void classifier_set_c (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
+    std::ignore = plhs;
+
     // Validate arguments
     if (nrhs != 2) {
         mexErrMsgTxt("Command requires two input arguments!");
@@ -480,6 +492,8 @@ static void classifier_get_tau (int nlhs, mxArray **plhs, int nrhs, const mxArra
 // classifier_set_tau (id, value)
 static void classifier_set_tau (int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
+    std::ignore = plhs;
+
     // Validate arguments
     if (nrhs != 2) {
         mexErrMsgTxt("Command requires two input arguments!");
