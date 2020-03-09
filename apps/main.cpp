@@ -96,9 +96,9 @@ int main (int argc, char **argv)
     // Parse command-line
     try {
         boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(commandLineArguments).positional(positionalArguments).run(), optionsMap);
-    } catch (std::exception &error) {
+    } catch (const std::exception &e) {
         std::cout << commandLineArguments << std::endl << std::endl;
-        std::cout << "Command-line error: " << error.what() << std::endl;
+        std::cout << "Command-line error: " << e.what() << std::endl;
         return -1;
     }
 
@@ -111,9 +111,9 @@ int main (int argc, char **argv)
     // Validate
     try {
         boost::program_options::notify(optionsMap);
-    } catch (std::exception &error) {
+    } catch (const std::exception &e) {
         std::cout << commandLineArguments << std::endl << std::endl;
-        std::cout << "Argument error: " << error.what() << std::endl;
+        std::cout << "Argument error: " << e.what() << std::endl;
         return -1;
     }
 
@@ -139,8 +139,8 @@ int main (int argc, char **argv)
         std::cout << "Loading training dataset..." << std::endl;
         try {
             datasetTrain.load(filenameTrainingData, filenameTrainingLabels);
-        } catch (std::exception &error) {
-            std::cout << "Failed to load training dataset: " << error.what() << std::endl;
+        } catch (const std::exception &e) {
+            std::cout << "Failed to load training dataset: " << e.what() << std::endl;
             return -2;
         }
         std::cout << "Loaded training set:" << std::endl;
@@ -155,8 +155,8 @@ int main (int argc, char **argv)
         std::cout << "Loading testing dataset..." << std::endl;
         try {
             datasetTest.load(filenameTestData, filenameTestLabels);
-        } catch (std::exception &error) {
-            std::cout << "Failed to load testing dataset: " << error.what() << std::endl;
+        } catch (const std::exception &e) {
+            std::cout << "Failed to load testing dataset: " << e.what() << std::endl;
             return -2;
         }
         std::cout << "Loaded testing set:" << std::endl;
